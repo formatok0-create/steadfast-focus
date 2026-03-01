@@ -37,7 +37,6 @@ export const BottomNav = () => {
 
   return (
     <>
-      {/* More menu overlay */}
       <AnimatePresence>
         {showMore && (
           <>
@@ -46,28 +45,33 @@ export const BottomNav = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMore(false)}
-              className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-background/70 backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed bottom-20 left-3 right-3 z-50 glass-card-elevated p-3 grid grid-cols-3 gap-2"
+              initial={{ opacity: 0, y: 60, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 60, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              className="fixed bottom-24 left-4 right-4 z-50 glass-card-elevated p-4 grid grid-cols-3 gap-2"
             >
-              {moreItems.map(mi => {
+              {moreItems.map((mi, i) => {
                 const active = activeTab === mi.id;
                 return (
-                  <button
+                  <motion.button
                     key={mi.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.04 * i }}
                     onClick={() => handleTab(mi.id)}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl transition-colors ${
-                      active ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
+                    className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-all duration-300 ${
+                      active
+                        ? 'gradient-primary text-white glow-primary'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                     }`}
                   >
                     <mi.icon size={20} />
-                    <span className="text-[10px] font-medium">{mi.label}</span>
-                  </button>
+                    <span className="text-[10px] font-semibold">{mi.label}</span>
+                  </motion.button>
                 );
               })}
             </motion.div>
@@ -75,29 +79,28 @@ export const BottomNav = () => {
         )}
       </AnimatePresence>
 
-      {/* Bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
-        <div className="mx-3 mb-2 glass-card-elevated px-2 py-2 flex items-center justify-around">
+        <div className="mx-4 mb-3 glass-card-elevated px-3 py-2.5 flex items-center justify-around">
           {mainTabs.map((tab) => {
             const isActive = tab.id === 'more' ? (showMore || isMoreActive) : activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => handleTab(tab.id)}
-                className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors duration-300"
+                className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all duration-300"
               >
                 {isActive && (
                   <motion.div
-                    layoutId="activeTab"
-                    className="absolute inset-0 bg-primary/15 rounded-xl"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    layoutId="activeNavTab"
+                    className="absolute inset-0 gradient-primary rounded-2xl opacity-15"
+                    transition={{ type: 'spring', stiffness: 300, damping: 28 }}
                   />
                 )}
                 <tab.icon
                   size={20}
-                  className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+                  className={`relative z-10 transition-all duration-300 ${isActive ? 'text-primary scale-110' : 'text-muted-foreground'}`}
                 />
-                <span className={`relative z-10 text-[10px] font-medium transition-colors duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                <span className={`relative z-10 text-[10px] font-semibold transition-all duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                   {tab.label}
                 </span>
               </button>
