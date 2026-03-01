@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Calendar, MoreHorizontal, X, FolderKanban, Target, BookOpen, BarChart3, Settings, Flame, Crosshair, Shield, Play, Pause, Square, Timer, ChevronDown, Link2 } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Calendar, MoreHorizontal, X, FolderKanban, Target, BookOpen, BarChart3, Settings, Flame, Crosshair, Shield, Play, Pause, Square, Timer, ChevronDown, Link2, RotateCcw } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
@@ -95,6 +95,12 @@ export const BottomNav = () => {
         addTimerSession(linkedTask.projectId, linkedTask.taskId, session);
       }
     }
+    setRunning(false);
+    setElapsed(0);
+    setSessionStart(null);
+  };
+
+  const handleReset = () => {
     setRunning(false);
     setElapsed(0);
     setSessionStart(null);
@@ -304,15 +310,28 @@ export const BottomNav = () => {
                   </motion.button>
                 )}
                 {(elapsed > 0 || running) && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleStop}
-                    className="px-6 py-3 rounded-2xl bg-destructive/10 text-destructive font-bold text-sm flex items-center gap-2"
-                  >
-                    <Square size={16} />
-                    {linkedTask ? 'Enregistrer' : 'Reset'}
-                  </motion.button>
+                  <>
+                    {linkedTask && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleStop}
+                        className="px-6 py-3 rounded-2xl bg-primary/15 text-primary font-bold text-sm flex items-center gap-2"
+                      >
+                        <Square size={16} />
+                        Enregistrer
+                      </motion.button>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleReset}
+                      className="px-6 py-3 rounded-2xl bg-destructive/10 text-destructive font-bold text-sm flex items-center gap-2"
+                    >
+                      <RotateCcw size={16} />
+                      Réinitialiser
+                    </motion.button>
+                  </>
                 )}
               </div>
 
