@@ -15,7 +15,6 @@ interface AppState {
   quote: string;
   setActiveTab: (tab: string) => void;
   toggleRoutine: (id: string) => void;
-  toggleTask: (id: string) => void;
   updateSettings: (s: Partial<AppSettings>) => void;
   // Project CRUD
   addProject: (project: Omit<Project, 'id' | 'realTime' | 'tasks'>) => void;
@@ -28,6 +27,12 @@ interface AppState {
   toggleProjectTask: (projectId: string, taskId: string) => void;
   addTimerSession: (projectId: string, taskId: string, session: TimerSession) => void;
   updateProjectTaskRealDuration: (projectId: string, taskId: string, seconds: number) => void;
+  // Daily tasks CRUD
+  addTask: (task: Omit<Task, 'id' | 'realDuration' | 'completed' | 'sessions' | 'status'>) => void;
+  updateTask: (id: string, data: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
+  setTaskStatus: (id: string, status: Task['status'], avoidReason?: string) => void;
+  addTaskTimerSession: (taskId: string, session: TimerSession) => void;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -46,7 +51,9 @@ const MOCK_ROUTINES: Routine[] = [
 const MOCK_TASKS: Task[] = [
   { id: '1', name: 'Refactoring API module', day: '2026-03-01', duration: 90, realDuration: 0, category: 'Développement', projectId: '1', completed: false, strict: true, sessions: [] },
   { id: '2', name: 'Maquette écran profil', day: '2026-03-01', duration: 60, realDuration: 0, category: 'Design', projectId: '1', completed: false, strict: false, sessions: [] },
-  { id: '3', name: 'Cours React avancé — Module 4', day: '2026-03-01', duration: 45, realDuration: 42, category: 'Formation', completed: true, strict: true, sessions: [] },
+  { id: '3', name: 'Cours React avancé — Module 4', day: '2026-03-01', duration: 45, realDuration: 42, category: 'Formation', completed: true, strict: true, sessions: [
+    { id: 'ts0', startTime: 1740800000000, endTime: 1740802520000, duration: 42 }
+  ] },
 ];
 
 const MOCK_PROJECTS: Project[] = [
@@ -138,11 +145,34 @@ export const useAppStore = create<AppState>()(
       toggleRoutine: (id) => set((s) => ({
         routines: s.routines.map(r => r.id === id ? { ...r, completed: !r.completed } : r)
       })),
-      toggleTask: (id) => set((s) => ({
-        tasks: s.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
-      })),
       updateSettings: (newSettings) => set((s) => ({
         settings: { ...s.settings, ...newSettings }
+      })),
+
+      // Daily tasks CRUD
+      addTask: (data) => set((s) => ({
+        tasks: [...s.tasks, { ...data, id: genId(), realDuration: 0, completed: false, sessions: [], status: undefined }]
+      })),
+      updateTask: (id, data) => set((s) => ({
+        tasks: s.tasks.map(t => t.id === id ? { ...t, ...data } : t)
+      })),
+      deleteTask: (id) => set((s) => ({
+        tasks: s.tasks.filter(t => t.id !== id)
+      })),
+      setTaskStatus: (id, status, avoidReason) => set((s) => ({
+        tasks: s.tasks.map(t => t.id === id ? {
+          ...t,
+          status,
+          completed: status === 'terminée',
+          avoidReason: status === 'évitée' ? avoidReason : undefined,
+        } : t)
+      })),
+      addTaskTimerSession: (taskId, session) => set((s) => ({
+        tasks: s.tasks.map(t =>
+          t.id === taskId
+            ? { ...t, sessions: [...t.sessions, session], realDuration: t.realDuration + session.duration }
+            : t
+        )
       })),
 
       // Project CRUD
