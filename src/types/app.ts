@@ -30,6 +30,8 @@ export interface Project {
   priority: 'haute' | 'moyenne' | 'basse';
   startDate: string;
   endDate: string;
+  dailyStartTime?: string; // HH:mm
+  dailyEndTime?: string; // HH:mm
   estimatedTime: number;
   realTime: number;
   status: 'en_cours' | 'en_pause' | 'terminé';
