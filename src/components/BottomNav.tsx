@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Calendar, MoreHorizontal, X, FolderKanban, Target, BookOpen, BarChart3, Settings, Flame, Crosshair, Shield, Play, Pause, Square, Timer } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Calendar, MoreHorizontal, X, FolderKanban, Target, BookOpen, BarChart3, Settings, Flame, Crosshair, Shield, Play, Pause, Square, Timer, ChevronDown, Link2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { format } from 'date-fns';
+import type { Task } from '@/types/app';
 
 const mainTabs = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Accueil' },
@@ -22,12 +24,40 @@ const moreItems = [
   { id: 'settings', icon: Settings, label: 'Paramètres' },
 ];
 
+interface LinkedTask {
+  type: 'daily' | 'project';
+  taskId: string;
+  projectId?: string;
+  label: string;
+}
+
 export const BottomNav = () => {
-  const { activeTab, setActiveTab } = useAppStore();
+  const { activeTab, setActiveTab, tasks, projects, addTaskTimerSession, addTimerSession } = useAppStore();
   const [showMore, setShowMore] = useState(false);
   const [showChrono, setShowChrono] = useState(false);
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [linkedTask, setLinkedTask] = useState<LinkedTask | null>(null);
+  const [showTaskPicker, setShowTaskPicker] = useState(false);
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Available tasks to link
+  const availableTasks = useMemo(() => {
+    const list: LinkedTask[] = [];
+    // Daily tasks (today, not completed)
+    tasks.filter(t => t.day === today && !t.completed && t.status !== 'évitée').forEach(t => {
+      list.push({ type: 'daily', taskId: t.id, label: t.name });
+    });
+    // Project tasks (not completed)
+    projects.forEach(p => {
+      p.tasks.filter(t => !t.completed).forEach(t => {
+        list.push({ type: 'project', taskId: t.id, projectId: p.id, label: `${p.name} — ${t.name}` });
+      });
+    });
+    return list;
+  }, [tasks, projects, today]);
 
   useEffect(() => {
     if (!running) return;
@@ -42,6 +72,33 @@ export const BottomNav = () => {
     if (h > 0) return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }, []);
+
+  const handleStart = () => {
+    setRunning(true);
+    if (!sessionStart) setSessionStart(Date.now());
+  };
+
+  const handlePause = () => setRunning(false);
+
+  const handleStop = () => {
+    if (elapsed > 0 && sessionStart && linkedTask) {
+      const durationMin = Math.max(1, Math.round(elapsed / 60));
+      const session = {
+        id: Math.random().toString(36).slice(2, 10),
+        startTime: sessionStart,
+        endTime: Date.now(),
+        duration: durationMin,
+      };
+      if (linkedTask.type === 'daily') {
+        addTaskTimerSession(linkedTask.taskId, session);
+      } else if (linkedTask.type === 'project' && linkedTask.projectId) {
+        addTimerSession(linkedTask.projectId, linkedTask.taskId, session);
+      }
+    }
+    setRunning(false);
+    setElapsed(0);
+    setSessionStart(null);
+  };
 
   const handleTab = (id: string) => {
     if (id === 'more') {
@@ -111,7 +168,7 @@ export const BottomNav = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowChrono(false)}
+              onClick={() => { setShowChrono(false); setShowTaskPicker(false); }}
               className="fixed inset-0 z-40 bg-background/70 backdrop-blur-md"
             />
             <motion.div
@@ -133,25 +190,103 @@ export const BottomNav = () => {
                 </motion.button>
               </div>
 
+              {/* Task linker */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-foreground/60 uppercase tracking-wider flex items-center gap-1">
+                  <Link2 size={10} />
+                  Lier à une tâche
+                </label>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setShowTaskPicker(!showTaskPicker)}
+                  disabled={running}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all ${
+                    linkedTask
+                      ? 'bg-primary/10 border border-primary/25 text-primary'
+                      : 'bg-muted/50 border border-border text-muted-foreground'
+                  } ${running ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  <span className="truncate text-left flex-1">
+                    {linkedTask ? linkedTask.label : 'Aucune tâche liée (libre)'}
+                  </span>
+                  <ChevronDown size={14} className={`shrink-0 transition-transform ${showTaskPicker ? 'rotate-180' : ''}`} />
+                </motion.button>
+
+                <AnimatePresence>
+                  {showTaskPicker && !running && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1 max-h-48 overflow-y-auto rounded-xl bg-muted/30 border border-border p-2">
+                        {/* Free mode */}
+                        <motion.button
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => { setLinkedTask(null); setShowTaskPicker(false); }}
+                          className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-colors ${
+                            !linkedTask ? 'bg-primary/10 text-primary font-bold' : 'text-muted-foreground hover:bg-muted/50'
+                          }`}
+                        >
+                          ⏱ Chrono libre (sans tâche)
+                        </motion.button>
+
+                        {availableTasks.length > 0 && (
+                          <div className="border-t border-border/50 my-1" />
+                        )}
+
+                        {availableTasks.map(t => (
+                          <motion.button
+                            key={`${t.type}-${t.taskId}`}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => { setLinkedTask(t); setShowTaskPicker(false); }}
+                            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-colors ${
+                              linkedTask?.taskId === t.taskId && linkedTask?.type === t.type
+                                ? 'bg-primary/10 text-primary font-bold'
+                                : 'text-foreground hover:bg-muted/50'
+                            }`}
+                          >
+                            <span className={`inline-block w-1.5 h-1.5 rounded-full mr-2 ${t.type === 'daily' ? 'bg-primary' : 'bg-accent'}`} />
+                            {t.label}
+                          </motion.button>
+                        ))}
+
+                        {availableTasks.length === 0 && (
+                          <p className="text-[10px] text-muted-foreground text-center py-2">Aucune tâche en cours</p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Timer display */}
               <div className="text-center py-4">
                 <p className={`text-5xl font-mono font-black tracking-tight ${running ? 'text-primary' : 'text-foreground'}`}>
                   {formatTime(elapsed)}
                 </p>
+                {linkedTask && (
+                  <p className="text-[10px] text-primary/70 font-medium mt-2 truncate px-4">
+                    ▸ {linkedTask.label}
+                  </p>
+                )}
                 {running && (
                   <motion.div
-                    className="w-2 h-2 rounded-full bg-primary mx-auto mt-3"
+                    className="w-2 h-2 rounded-full bg-primary mx-auto mt-2"
                     animate={{ opacity: [1, 0.3, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   />
                 )}
               </div>
 
+              {/* Controls */}
               <div className="flex items-center justify-center gap-3">
                 {!running ? (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setRunning(true)}
+                    onClick={handleStart}
                     className="px-8 py-3 rounded-2xl gradient-cool text-white font-bold text-sm shadow-lg flex items-center gap-2"
                   >
                     <Play size={16} />
@@ -161,7 +296,7 @@ export const BottomNav = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setRunning(false)}
+                    onClick={handlePause}
                     className="px-8 py-3 rounded-2xl bg-warning/15 text-warning font-bold text-sm flex items-center gap-2"
                   >
                     <Pause size={16} />
@@ -172,14 +307,20 @@ export const BottomNav = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => { setRunning(false); setElapsed(0); }}
+                    onClick={handleStop}
                     className="px-6 py-3 rounded-2xl bg-destructive/10 text-destructive font-bold text-sm flex items-center gap-2"
                   >
                     <Square size={16} />
-                    Reset
+                    {linkedTask ? 'Enregistrer' : 'Reset'}
                   </motion.button>
                 )}
               </div>
+
+              {linkedTask && elapsed > 0 && (
+                <p className="text-[10px] text-center text-muted-foreground">
+                  Le temps sera enregistré sur la tâche à l'arrêt
+                </p>
+              )}
             </motion.div>
           </>
         )}
@@ -193,14 +334,17 @@ export const BottomNav = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             onClick={() => setShowChrono(true)}
-            className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full glass-card-elevated border border-primary/30 flex items-center gap-2 shadow-lg"
+            className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full glass-card-elevated border border-primary/30 flex items-center gap-2 shadow-lg max-w-[80%]"
           >
             <motion.div
-              className="w-2 h-2 rounded-full bg-primary"
+              className="w-2 h-2 rounded-full bg-primary shrink-0"
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
             />
             <span className="text-xs font-mono font-bold text-primary">{formatTime(elapsed)}</span>
+            {linkedTask && (
+              <span className="text-[9px] text-muted-foreground truncate max-w-[120px]">· {linkedTask.label}</span>
+            )}
           </motion.button>
         )}
       </AnimatePresence>
