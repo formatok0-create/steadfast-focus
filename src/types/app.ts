@@ -1,3 +1,10 @@
+export interface TimerSession {
+  id: string;
+  startTime: number;
+  endTime?: number;
+  duration: number;
+}
+
 export interface Task {
   id: string;
   name: string;
@@ -10,13 +17,8 @@ export interface Task {
   completed: boolean;
   strict: boolean;
   sessions: TimerSession[];
-}
-
-export interface TimerSession {
-  id: string;
-  startTime: number;
-  endTime?: number;
-  duration: number;
+  status?: 'terminée' | 'incomplète' | 'évitée';
+  avoidReason?: string;
 }
 
 export interface Project {
@@ -39,6 +41,8 @@ export interface Routine {
   frequency: 'quotidien' | 'hebdomadaire';
   completed: boolean;
   streak: number;
+  active: boolean;
+  reminder?: boolean;
 }
 
 export interface Skill {
@@ -51,11 +55,57 @@ export interface Skill {
   active: boolean;
 }
 
+export interface FormationModule {
+  id: string;
+  name: string;
+  sessions: FormationSession[];
+}
+
+export interface FormationSession {
+  id: string;
+  name: string;
+  duration: number; // minutes
+  completed: boolean;
+  realDuration: number;
+  day?: string;
+}
+
+export interface Formation {
+  id: string;
+  name: string;
+  skillId?: string;
+  objective: string;
+  totalDuration: number; // hours
+  modules: FormationModule[];
+  planningMode: 'auto' | 'manuel';
+  status: 'en_cours' | 'en_pause' | 'terminée';
+}
+
 export interface MonthlyObjective {
   id: string;
+  month: string; // YYYY-MM
   main: string;
   secondary: string[];
   habitToReinforce: string;
   behaviorToEliminate: string;
   review?: string;
+  result?: 'réussi' | 'partiel' | 'échoué';
+  lesson?: string;
+}
+
+export interface AppSettings {
+  theme: 'sombre' | 'clair' | 'minimal';
+  maxTasksPerDay: number;
+  maxActiveSkills: number;
+  strictMode: boolean;
+  notificationTone: 'calme' | 'strict' | 'neutre';
+  enabledSections: string[];
+}
+
+export interface DailyReview {
+  id: string;
+  day: string;
+  honorable: boolean;
+  notes: string;
+  completedAt: number;
 }

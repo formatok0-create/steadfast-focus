@@ -4,6 +4,11 @@ import { ProjectsScreen } from '@/components/ProjectsScreen';
 import { TasksScreen } from '@/components/TasksScreen';
 import { SkillsScreen } from '@/components/SkillsScreen';
 import { PlanningScreen } from '@/components/PlanningScreen';
+import { RoutinesScreen } from '@/components/RoutinesScreen';
+import { FormationsScreen } from '@/components/FormationsScreen';
+import { ObjectivesScreen } from '@/components/ObjectivesScreen';
+import { StatsScreen } from '@/components/StatsScreen';
+import { SettingsScreen } from '@/components/SettingsScreen';
 import { useAppStore } from '@/stores/appStore';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -13,6 +18,11 @@ const screens: Record<string, React.FC> = {
   tasks: TasksScreen,
   skills: SkillsScreen,
   planning: PlanningScreen,
+  routines: RoutinesScreen,
+  formations: FormationsScreen,
+  objectives: ObjectivesScreen,
+  stats: StatsScreen,
+  settings: SettingsScreen,
 };
 
 const Index = () => {
