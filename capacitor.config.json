@@ -1,0 +1,9 @@
+{
+  "appId": "app.lovable.09afff4de281479e8e9de29c379739fc",
+  "appName": "steadfast-focus",
+  "webDir": "dist",
+  "server": {
+    "url": "https://09afff4d-e281-479e-8e9d-e29c379739fc.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  }
+}
