@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Play, Pause, Square, CheckCircle2, Circle, Clock, Trash2, AlertTriangle, Ban, ChevronDown, X, CalendarIcon, ListTodo, TrendingUp, Zap } from 'lucide-react';
+import { Plus, Play, Pause, Square, CheckCircle2, Circle, Clock, Trash2, AlertTriangle, Ban, ChevronDown, X, CalendarIcon, ListTodo, TrendingUp, Zap, Edit3 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import type { Task } from '@/types/app';
 import { format } from 'date-fns';
@@ -23,6 +23,7 @@ const CATEGORIES = ['Développement', 'Design', 'Formation', 'Recherche', 'Admin
 export const TasksScreen = () => {
   const { tasks, settings, setTaskStatus, deleteTask } = useAppStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedDay, setSelectedDay] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const dayTasks = tasks.filter(t => t.day === selectedDay);
@@ -164,7 +165,7 @@ export const TasksScreen = () => {
         {/* Task list */}
         {dayTasks.map((task) => (
           <motion.div key={task.id} variants={item}>
-            <TaskCard task={task} />
+            <TaskCard task={task} onEdit={() => setEditingTask(task)} />
           </motion.div>
         ))}
 
@@ -177,13 +178,18 @@ export const TasksScreen = () => {
         )}
       </motion.div>
 
-      <TaskFormModal open={showCreateModal} onClose={() => setShowCreateModal(false)} defaultDay={selectedDay} />
+      <TaskFormModal
+        open={showCreateModal || !!editingTask}
+        onClose={() => { setShowCreateModal(false); setEditingTask(null); }}
+        defaultDay={selectedDay}
+        task={editingTask}
+      />
     </>
   );
 };
 
 // ===== TASK CARD WITH CHRONO & STATUS =====
-const TaskCard = ({ task }: { task: Task }) => {
+const TaskCard = ({ task, onEdit }: { task: Task; onEdit: () => void }) => {
   const { setTaskStatus, deleteTask, addTaskTimerSession } = useAppStore();
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -278,11 +284,20 @@ const TaskCard = ({ task }: { task: Task }) => {
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor} bg-current/10`}>{statusLabel}</span>
             </div>
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-xs font-mono text-muted-foreground">{task.duration}m</p>
-            <p className={`text-[10px] font-mono font-bold ${overTime ? 'text-destructive' : 'text-success'}`}>
-              {totalReal}m réel
-            </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="text-right">
+              <p className="text-xs font-mono text-muted-foreground">{task.duration}m</p>
+              <p className={`text-[10px] font-mono font-bold ${overTime ? 'text-destructive' : 'text-success'}`}>
+                {totalReal}m réel
+              </p>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.8 }}
+              onClick={onEdit}
+              className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Edit3 size={12} />
+            </motion.button>
           </div>
         </div>
 
@@ -437,9 +452,10 @@ const TaskCard = ({ task }: { task: Task }) => {
   );
 };
 
-// ===== CREATE TASK MODAL =====
-const TaskFormModal = ({ open, onClose, defaultDay }: { open: boolean; onClose: () => void; defaultDay: string }) => {
-  const { addTask, settings, tasks } = useAppStore();
+// ===== CREATE/EDIT TASK MODAL =====
+const TaskFormModal = ({ open, onClose, defaultDay, task }: { open: boolean; onClose: () => void; defaultDay: string; task?: Task | null }) => {
+  const { addTask, updateTask, settings, tasks } = useAppStore();
+  const isEdit = !!task;
 
   const [name, setName] = useState('');
   const [day, setDay] = useState<Date | undefined>(new Date(defaultDay));
@@ -447,24 +463,39 @@ const TaskFormModal = ({ open, onClose, defaultDay }: { open: boolean; onClose: 
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [strict, setStrict] = useState(false);
 
+  useEffect(() => {
+    if (task) {
+      setName(task.name);
+      setDay(new Date(task.day));
+      setDuration(String(task.duration));
+      setCategory(task.category);
+      setStrict(task.strict);
+    } else {
+      setName(''); setDay(new Date(defaultDay)); setDuration(''); setCategory(CATEGORIES[0]); setStrict(false);
+    }
+  }, [task, open, defaultDay]);
+
   const dayStr = day ? format(day, 'yyyy-MM-dd') : '';
-  const dayTaskCount = tasks.filter(t => t.day === dayStr).length;
+  const dayTaskCount = tasks.filter(t => t.day === dayStr && (!isEdit || t.id !== task?.id)).length;
   const atLimit = dayTaskCount >= settings.maxTasksPerDay;
 
-  const canSubmit = name.trim().length > 0 && parseInt(duration) > 0 && !atLimit;
+  const canSubmit = name.trim().length > 0 && parseInt(duration) > 0 && (!atLimit || isEdit);
 
   const handleSubmit = () => {
     if (!canSubmit || !day) return;
-    addTask({
+    const data = {
       name: name.trim(),
       day: format(day, 'yyyy-MM-dd'),
       duration: parseInt(duration),
       category,
       strict,
-    });
-    setName('');
-    setDuration('');
-    setStrict(false);
+    };
+    if (isEdit && task) {
+      updateTask(task.id, data);
+    } else {
+      addTask(data);
+    }
+    setName(''); setDuration(''); setStrict(false);
     onClose();
   };
 
@@ -487,13 +518,13 @@ const TaskFormModal = ({ open, onClose, defaultDay }: { open: boolean; onClose: 
             className="fixed inset-x-3 bottom-0 z-50 glass-card-elevated rounded-t-3xl overflow-y-auto p-5 space-y-5 max-h-[80vh]"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-foreground">Nouvelle tâche</h2>
+              <h2 className="text-lg font-bold text-foreground">{isEdit ? 'Modifier la tâche' : 'Nouvelle tâche'}</h2>
               <motion.button whileTap={{ scale: 0.9 }} onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground">
                 <X size={16} />
               </motion.button>
             </div>
 
-            {atLimit && (
+            {atLimit && !isEdit && (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
                 <AlertTriangle size={14} className="text-destructive" />
                 <span className="text-xs text-destructive">Limite de {settings.maxTasksPerDay} tâches atteinte pour ce jour.</span>
@@ -588,7 +619,7 @@ const TaskFormModal = ({ open, onClose, defaultDay }: { open: boolean; onClose: 
                 canSubmit ? 'gradient-primary text-white shadow-lg glow-primary' : 'bg-muted text-muted-foreground cursor-not-allowed'
               }`}
             >
-              Créer la tâche
+              {isEdit ? 'Enregistrer' : 'Créer la tâche'}
             </motion.button>
           </motion.div>
         </>
