@@ -48,18 +48,25 @@ export const PlanningScreen = () => {
 
     // Tasks for selected day
     const dayTasks = tasks.filter(t => t.day === selectedDayStr);
-    let nextTaskHour = 8; // Start scheduling tasks at 8h
+    let nextTaskHour = 8; // fallback if no startTime
     dayTasks.forEach(t => {
+      let startHour: number;
+      if (t.startTime) {
+        const [h, m] = t.startTime.split(':').map(Number);
+        startHour = h + m / 60;
+      } else {
+        startHour = nextTaskHour;
+      }
       blocks.push({
         id: `task-${t.id}`,
         label: t.name,
-        startHour: nextTaskHour,
+        startHour,
         durationMin: t.duration,
         type: 'task',
         completed: t.completed,
         category: t.category,
       });
-      nextTaskHour += Math.ceil(t.duration / 60 * 2) / 2; // round to 30min slots
+      nextTaskHour = startHour + Math.ceil(t.duration / 60 * 2) / 2;
     });
 
     // Active routines - place at fixed times

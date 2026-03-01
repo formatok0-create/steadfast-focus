@@ -76,9 +76,9 @@ const MOCK_ROUTINES: Routine[] = [
 ];
 
 const MOCK_TASKS: Task[] = [
-  { id: '1', name: 'Refactoring API module', day: '2026-03-01', duration: 90, realDuration: 0, category: 'Développement', projectId: '1', completed: false, strict: true, sessions: [] },
-  { id: '2', name: 'Maquette écran profil', day: '2026-03-01', duration: 60, realDuration: 0, category: 'Design', projectId: '1', completed: false, strict: false, sessions: [] },
-  { id: '3', name: 'Cours React avancé — Module 4', day: '2026-03-01', duration: 45, realDuration: 42, category: 'Formation', completed: true, strict: true, sessions: [
+  { id: '1', name: 'Refactoring API module', day: '2026-03-01', startTime: '08:00', duration: 90, realDuration: 0, category: 'Développement', projectId: '1', completed: false, strict: true, sessions: [] },
+  { id: '2', name: 'Maquette écran profil', day: '2026-03-01', startTime: '09:30', duration: 60, realDuration: 0, category: 'Design', projectId: '1', completed: false, strict: false, sessions: [] },
+  { id: '3', name: 'Cours React avancé — Module 4', day: '2026-03-01', startTime: '11:00', duration: 45, realDuration: 42, category: 'Formation', completed: true, strict: true, sessions: [
     { id: 'ts0', startTime: 1740800000000, endTime: 1740802520000, duration: 42 }
   ] },
 ];
