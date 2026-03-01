@@ -150,6 +150,12 @@ export const SkillsScreen = () => {
                 <span className={`text-xs font-bold ${levelColors[skill.level]}`}>
                   {levelLabels[skill.level]}
                 </span>
+                <motion.button whileTap={{ scale: 0.8 }} onClick={() => openEdit(skill)} className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+                  <Edit2 size={12} className="text-primary" />
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.8 }} onClick={() => deleteSkill(skill.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                  <Trash2 size={12} className="text-destructive" />
+                </motion.button>
                 <motion.button whileTap={{ scale: 0.8 }} onClick={() => toggleSkillActive(skill.id)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
                   <Power size={12} className={skill.active ? 'text-primary' : 'text-muted-foreground'} />
                 </motion.button>
