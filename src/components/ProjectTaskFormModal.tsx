@@ -24,33 +24,43 @@ export const ProjectTaskFormModal = ({ open, onClose, projectId, task }: Props) 
 
   const [name, setName] = useState('');
   const [day, setDay] = useState<Date | undefined>(new Date());
-  const [duration, setDuration] = useState('');
   const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [strict, setStrict] = useState(false);
+
+  const calcDuration = (start: string, end: string) => {
+    if (!start || !end) return 0;
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    return (eh * 60 + em) - (sh * 60 + sm);
+  };
+
+  const duration = calcDuration(startTime, endTime);
 
   useEffect(() => {
     if (task) {
       setName(task.name);
       setDay(new Date(task.day));
-      setDuration(String(task.duration));
       setStartTime(task.startTime || '');
+      setEndTime(task.endTime || '');
       setCategory(task.category);
       setStrict(task.strict);
     } else {
-      setName(''); setDay(new Date()); setDuration(''); setStartTime(''); setCategory(CATEGORIES[0]); setStrict(false);
+      setName(''); setDay(new Date()); setStartTime(''); setEndTime(''); setCategory(CATEGORIES[0]); setStrict(false);
     }
   }, [task, open]);
 
-  const canSubmit = name.trim().length > 0 && duration.length > 0 && parseInt(duration) > 0 && day;
+  const canSubmit = name.trim().length > 0 && startTime.length > 0 && endTime.length > 0 && duration > 0 && day;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
     const data = {
       name: name.trim(),
       day: format(day!, 'yyyy-MM-dd'),
-      duration: parseInt(duration),
-      startTime: startTime || undefined,
+      duration,
+      startTime,
+      endTime,
       category,
       strict,
       projectId,
@@ -119,31 +129,33 @@ export const ProjectTaskFormModal = ({ open, onClose, projectId, task }: Props) 
               </Popover>
             </div>
 
-            {/* Duration */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Durée (minutes) *</label>
-              <input
-                type="number"
-                value={duration}
-                onChange={e => setDuration(e.target.value)}
-                placeholder="Ex: 60"
-                min={1}
-                max={480}
-                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-              />
+            {/* Start & End time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Début *</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={e => setStartTime(e.target.value)}
+                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Fin *</label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={e => setEndTime(e.target.value)}
+                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                />
+              </div>
             </div>
-
-            {/* Start time */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Heure de début</label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={e => setStartTime(e.target.value)}
-                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
-              />
-              <p className="text-[10px] text-muted-foreground">Optionnel — utilisé pour le planning</p>
-            </div>
+            {duration > 0 && (
+              <p className="text-[10px] text-muted-foreground">Durée calculée : <span className="font-bold text-foreground">{Math.floor(duration / 60)}h{(duration % 60).toString().padStart(2, '0')}</span></p>
+            )}
+            {startTime && endTime && duration <= 0 && (
+              <p className="text-[10px] text-destructive font-bold">L'heure de fin doit être après l'heure de début</p>
+            )}
 
             {/* Category */}
             <div className="space-y-1.5">

@@ -10,6 +10,7 @@ export interface Task {
   name: string;
   day: string;
   startTime?: string; // HH:mm format, e.g. "08:30"
+  endTime?: string; // HH:mm format, e.g. "09:30"
   duration: number; // minutes
   realDuration: number;
   category: string;
