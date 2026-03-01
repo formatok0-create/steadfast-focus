@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CalendarIcon, Clock, CheckCircle2, Circle, ChevronLeft, ChevronRight, Flame, BookOpen, FolderOpen, ListTodo } from 'lucide-react';
+import { CalendarIcon, Clock, CheckCircle2, Circle, ChevronLeft, ChevronRight, Flame, BookOpen, FolderOpen, ListTodo, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -120,6 +120,23 @@ export const PlanningScreen = () => {
     return blocks.sort((a, b) => a.startHour - b.startHour);
   }, [tasks, routines, formations, selectedDayStr]);
 
+  // Detect conflicts between blocks
+  const conflicts = useMemo(() => {
+    const found: Set<string> = new Set();
+    for (let i = 0; i < timeBlocks.length; i++) {
+      for (let j = i + 1; j < timeBlocks.length; j++) {
+        const a = timeBlocks[i], b = timeBlocks[j];
+        const aEnd = a.startHour + a.durationMin / 60;
+        const bEnd = b.startHour + b.durationMin / 60;
+        if (a.startHour < bEnd && b.startHour < aEnd) {
+          found.add(a.id);
+          found.add(b.id);
+        }
+      }
+    }
+    return found;
+  }, [timeBlocks]);
+
   const goDay = (offset: number) => setSelectedDate(d => addDays(d, offset));
 
   const dayStats = {
@@ -129,6 +146,7 @@ export const PlanningScreen = () => {
     tasks: timeBlocks.filter(b => b.type === 'task').length,
     routines: timeBlocks.filter(b => b.type === 'routine').length,
     formations: timeBlocks.filter(b => b.type === 'formation').length,
+    conflicts: conflicts.size,
   };
 
   const formatBlockTime = (startHour: number, durationMin: number) => {
@@ -236,7 +254,17 @@ export const PlanningScreen = () => {
         </div>
       </motion.div>
 
-      {/* Completion bar */}
+      {/* Conflict warning */}
+      {dayStats.conflicts > 0 && (
+        <motion.div variants={item} className="flex items-center gap-3 p-4 rounded-2xl bg-warning/10 border border-warning/20">
+          <AlertTriangle size={18} className="text-warning shrink-0" />
+          <div>
+            <p className="text-sm font-bold text-warning">Conflit horaire</p>
+            <p className="text-[10px] text-warning/80">{dayStats.conflicts} bloc{dayStats.conflicts > 1 ? 's' : ''} se chevauchent sur cette journée</p>
+          </div>
+        </motion.div>
+      )}
+
       {dayStats.total > 0 && (
         <motion.div variants={item} className="glass-card-elevated p-4 relative overflow-hidden">
           <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-10 gradient-cool blur-3xl" />
@@ -289,6 +317,7 @@ export const PlanningScreen = () => {
                 {hourBlocks.map((block) => {
                   const style = typeStyles[block.type];
                   const heightPx = Math.max(block.durationMin * 0.8, 44);
+                  const isConflict = conflicts.has(block.id);
 
                   return (
                     <motion.div
@@ -297,9 +326,16 @@ export const PlanningScreen = () => {
                       animate={{ opacity: 1, x: 0, scale: 1 }}
                       transition={{ duration: 0.4, delay: 0.1 }}
                       whileHover={{ scale: 1.02, x: 2 }}
-                      className={`${style.bg} border ${style.border} rounded-xl px-3.5 py-2.5 mb-2 shadow-lg ${style.glow} relative overflow-hidden`}
+                      className={`${isConflict ? 'bg-warning/12 border-warning/40' : `${style.bg} border ${style.border}`} border rounded-xl px-3.5 py-2.5 mb-2 shadow-lg ${style.glow} relative overflow-hidden`}
                       style={{ minHeight: `${heightPx}px` }}
                     >
+                      {/* Conflict indicator */}
+                      {isConflict && (
+                        <div className="absolute top-2 right-2 z-20">
+                          <AlertTriangle size={14} className="text-warning" />
+                        </div>
+                      )}
+
                       {/* Completed overlay */}
                       {block.completed && (
                         <div className="absolute inset-0 bg-background/30 backdrop-blur-[1px] flex items-center justify-center">
@@ -308,10 +344,10 @@ export const PlanningScreen = () => {
                       )}
 
                       <div className="relative z-10">
-                        <p className={`text-sm font-semibold ${style.text} ${block.completed ? 'line-through opacity-60' : ''}`}>
+                        <p className={`text-sm font-semibold ${isConflict ? 'text-warning' : style.text} ${block.completed ? 'line-through opacity-60' : ''}`}>
                           {block.label}
                         </p>
-                        <span className={`text-[10px] font-mono ${style.text} opacity-60 mt-0.5 block`}>
+                        <span className={`text-[10px] font-mono ${isConflict ? 'text-warning/70' : `${style.text} opacity-60`} mt-0.5 block`}>
                           {formatBlockTime(block.startHour, block.durationMin)}
                         </span>
                       </div>
