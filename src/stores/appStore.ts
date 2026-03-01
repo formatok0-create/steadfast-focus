@@ -56,6 +56,10 @@ interface AppState {
   deleteFormationSession: (formationId: string, moduleId: string, sessionId: string) => void;
   toggleFormationSession: (formationId: string, moduleId: string, sessionId: string) => void;
   addFormationSessionTime: (formationId: string, moduleId: string, sessionId: string, minutes: number) => void;
+  // Objectives CRUD
+  addObjective: (objective: Omit<MonthlyObjective, 'id'>) => void;
+  updateObjective: (id: string, data: Partial<MonthlyObjective>) => void;
+  deleteObjective: (id: string) => void;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -406,6 +410,17 @@ export const useAppStore = create<AppState>()(
             }
             : f
         )
+      })),
+
+      // Objectives CRUD
+      addObjective: (data) => set((s) => ({
+        objectives: [...s.objectives, { ...data, id: genId() }]
+      })),
+      updateObjective: (id, data) => set((s) => ({
+        objectives: s.objectives.map(o => o.id === id ? { ...o, ...data } : o)
+      })),
+      deleteObjective: (id) => set((s) => ({
+        objectives: s.objectives.filter(o => o.id !== id)
       })),
     }),
     { name: 'discipline-app' }
