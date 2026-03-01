@@ -64,6 +64,7 @@ interface AppState {
   addDailyReview: (review: Omit<DailyReview, 'id'>) => void;
   updateDailyReview: (id: string, data: Partial<DailyReview>) => void;
   deleteDailyReview: (id: string) => void;
+  resetAll: () => void;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -437,6 +438,18 @@ export const useAppStore = create<AppState>()(
       deleteDailyReview: (id) => set((s) => ({
         dailyReviews: s.dailyReviews.filter(r => r.id !== id)
       })),
+      resetAll: () => set({
+        tasks: [],
+        projects: [],
+        routines: [],
+        skills: [],
+        formations: [],
+        objectives: [],
+        dailyReviews: [],
+        settings: DEFAULT_SETTINGS,
+        activeTab: 'dashboard',
+        quote: "La discipline est le pont entre les objectifs et l'accomplissement.",
+      }),
     }),
     { name: 'discipline-app' }
   )
