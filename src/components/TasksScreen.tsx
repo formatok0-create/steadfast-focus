@@ -520,8 +520,12 @@ const TaskFormModal = ({ open, onClose, defaultDay, task }: { open: boolean; onC
       })
     : [];
   const hasConflict = conflictingTasks.length > 0;
+  const [forceConflict, setForceConflict] = useState(false);
 
-  const canSubmit = name.trim().length > 0 && startTime.length > 0 && endTime.length > 0 && duration > 0 && (!atLimit || isEdit);
+  // Reset force when times change
+  useEffect(() => { setForceConflict(false); }, [startTime, endTime, day]);
+
+  const canSubmit = name.trim().length > 0 && startTime.length > 0 && endTime.length > 0 && duration > 0 && (!atLimit || isEdit) && (!hasConflict || forceConflict);
 
   const handleSubmit = () => {
     if (!canSubmit || !day) return;
@@ -634,14 +638,28 @@ const TaskFormModal = ({ open, onClose, defaultDay, task }: { open: boolean; onC
               <p className="text-[10px] text-destructive font-bold">L'heure de fin doit être après l'heure de début</p>
             )}
             {hasConflict && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20">
-                <AlertTriangle size={14} className="text-warning shrink-0" />
-                <div>
-                  <p className="text-xs text-warning font-bold">Conflit horaire détecté</p>
-                  <p className="text-[10px] text-warning/80">
-                    Chevauche : {conflictingTasks.map(t => `${t.name} (${t.startTime}–${t.endTime})`).join(', ')}
-                  </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20">
+                  <AlertTriangle size={14} className="text-warning shrink-0" />
+                  <div>
+                    <p className="text-xs text-warning font-bold">Conflit horaire détecté</p>
+                    <p className="text-[10px] text-warning/80">
+                      Chevauche : {conflictingTasks.map(t => `${t.name} (${t.startTime}–${t.endTime})`).join(', ')}
+                    </p>
+                  </div>
                 </div>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setForceConflict(!forceConflict)}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${
+                    forceConflict ? 'bg-destructive/10 border border-destructive/30' : 'bg-muted/50 border border-border'
+                  }`}
+                >
+                  <span className="text-xs text-foreground">Forcer malgré le conflit</span>
+                  <span className={`text-xs font-bold ${forceConflict ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {forceConflict ? 'OUI' : 'NON'}
+                  </span>
+                </motion.button>
               </div>
             )}
 
