@@ -44,6 +44,18 @@ interface AppState {
   deleteTask: (id: string) => void;
   setTaskStatus: (id: string, status: Task['status'], avoidReason?: string) => void;
   addTaskTimerSession: (taskId: string, session: TimerSession) => void;
+  // Formation CRUD
+  addFormation: (formation: Omit<Formation, 'id' | 'modules'>) => void;
+  updateFormation: (id: string, data: Partial<Formation>) => void;
+  deleteFormation: (id: string) => void;
+  addFormationModule: (formationId: string, name: string) => void;
+  updateFormationModule: (formationId: string, moduleId: string, name: string) => void;
+  deleteFormationModule: (formationId: string, moduleId: string) => void;
+  addFormationSession: (formationId: string, moduleId: string, session: { name: string; duration: number; day?: string }) => void;
+  updateFormationSession: (formationId: string, moduleId: string, sessionId: string, data: Partial<import('@/types/app').FormationSession>) => void;
+  deleteFormationSession: (formationId: string, moduleId: string, sessionId: string) => void;
+  toggleFormationSession: (formationId: string, moduleId: string, sessionId: string) => void;
+  addFormationSessionTime: (formationId: string, moduleId: string, sessionId: string, minutes: number) => void;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -291,6 +303,108 @@ export const useAppStore = create<AppState>()(
               tasks: p.tasks.map(t => t.id === taskId ? { ...t, realDuration: Math.round(seconds / 60) } : t),
             }
             : p
+        )
+      })),
+
+      // Formation CRUD
+      addFormation: (data) => set((s) => ({
+        formations: [...s.formations, { ...data, id: genId(), modules: [] }]
+      })),
+      updateFormation: (id, data) => set((s) => ({
+        formations: s.formations.map(f => f.id === id ? { ...f, ...data } : f)
+      })),
+      deleteFormation: (id) => set((s) => ({
+        formations: s.formations.filter(f => f.id !== id)
+      })),
+      addFormationModule: (formationId, name) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? { ...f, modules: [...f.modules, { id: genId(), name, sessions: [] }] }
+            : f
+        )
+      })),
+      updateFormationModule: (formationId, moduleId, name) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? { ...f, modules: f.modules.map(m => m.id === moduleId ? { ...m, name } : m) }
+            : f
+        )
+      })),
+      deleteFormationModule: (formationId, moduleId) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? { ...f, modules: f.modules.filter(m => m.id !== moduleId) }
+            : f
+        )
+      })),
+      addFormationSession: (formationId, moduleId, session) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? {
+              ...f,
+              modules: f.modules.map(m =>
+                m.id === moduleId
+                  ? { ...m, sessions: [...m.sessions, { ...session, id: genId(), completed: false, realDuration: 0 }] }
+                  : m
+              )
+            }
+            : f
+        )
+      })),
+      updateFormationSession: (formationId, moduleId, sessionId, data) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? {
+              ...f,
+              modules: f.modules.map(m =>
+                m.id === moduleId
+                  ? { ...m, sessions: m.sessions.map(se => se.id === sessionId ? { ...se, ...data } : se) }
+                  : m
+              )
+            }
+            : f
+        )
+      })),
+      deleteFormationSession: (formationId, moduleId, sessionId) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? {
+              ...f,
+              modules: f.modules.map(m =>
+                m.id === moduleId
+                  ? { ...m, sessions: m.sessions.filter(se => se.id !== sessionId) }
+                  : m
+              )
+            }
+            : f
+        )
+      })),
+      toggleFormationSession: (formationId, moduleId, sessionId) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? {
+              ...f,
+              modules: f.modules.map(m =>
+                m.id === moduleId
+                  ? { ...m, sessions: m.sessions.map(se => se.id === sessionId ? { ...se, completed: !se.completed } : se) }
+                  : m
+              )
+            }
+            : f
+        )
+      })),
+      addFormationSessionTime: (formationId, moduleId, sessionId, minutes) => set((s) => ({
+        formations: s.formations.map(f =>
+          f.id === formationId
+            ? {
+              ...f,
+              modules: f.modules.map(m =>
+                m.id === moduleId
+                  ? { ...m, sessions: m.sessions.map(se => se.id === sessionId ? { ...se, realDuration: se.realDuration + minutes } : se) }
+                  : m
+              )
+            }
+            : f
         )
       })),
     }),
