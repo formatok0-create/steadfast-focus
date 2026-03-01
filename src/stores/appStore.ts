@@ -60,6 +60,10 @@ interface AppState {
   addObjective: (objective: Omit<MonthlyObjective, 'id'>) => void;
   updateObjective: (id: string, data: Partial<MonthlyObjective>) => void;
   deleteObjective: (id: string) => void;
+  // Daily reviews
+  addDailyReview: (review: Omit<DailyReview, 'id'>) => void;
+  updateDailyReview: (id: string, data: Partial<DailyReview>) => void;
+  deleteDailyReview: (id: string) => void;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -421,6 +425,17 @@ export const useAppStore = create<AppState>()(
       })),
       deleteObjective: (id) => set((s) => ({
         objectives: s.objectives.filter(o => o.id !== id)
+      })),
+
+      // Daily reviews
+      addDailyReview: (data) => set((s) => ({
+        dailyReviews: [...s.dailyReviews, { ...data, id: genId() }]
+      })),
+      updateDailyReview: (id, data) => set((s) => ({
+        dailyReviews: s.dailyReviews.map(r => r.id === id ? { ...r, ...data } : r)
+      })),
+      deleteDailyReview: (id) => set((s) => ({
+        dailyReviews: s.dailyReviews.filter(r => r.id !== id)
       })),
     }),
     { name: 'discipline-app' }

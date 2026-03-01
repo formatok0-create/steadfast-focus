@@ -9,6 +9,7 @@ import { FormationsScreen } from '@/components/FormationsScreen';
 import { ObjectivesScreen } from '@/components/ObjectivesScreen';
 import { StatsScreen } from '@/components/StatsScreen';
 import { SettingsScreen } from '@/components/SettingsScreen';
+import { DailyReviewScreen } from '@/components/DailyReviewScreen';
 import { useAppStore } from '@/stores/appStore';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -23,6 +24,7 @@ const screens: Record<string, React.FC> = {
   objectives: ObjectivesScreen,
   stats: StatsScreen,
   settings: SettingsScreen,
+  review: DailyReviewScreen,
 };
 
 const Index = () => {

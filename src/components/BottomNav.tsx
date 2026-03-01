@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, CheckSquare, Calendar, MoreHorizontal, X, FolderKanban, Target, BookOpen, BarChart3, Settings, Flame, Crosshair } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Calendar, MoreHorizontal, X, FolderKanban, Target, BookOpen, BarChart3, Settings, Flame, Crosshair, Shield } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { useState } from 'react';
 
@@ -16,6 +16,7 @@ const moreItems = [
   { id: 'skills', icon: Target, label: 'Compétences' },
   { id: 'formations', icon: BookOpen, label: 'Formations' },
   { id: 'objectives', icon: Crosshair, label: 'Objectifs' },
+  { id: 'review', icon: Shield, label: 'Revue' },
   { id: 'stats', icon: BarChart3, label: 'Statistiques' },
   { id: 'settings', icon: Settings, label: 'Paramètres' },
 ];
