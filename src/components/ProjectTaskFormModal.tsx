@@ -25,6 +25,7 @@ export const ProjectTaskFormModal = ({ open, onClose, projectId, task }: Props) 
   const [name, setName] = useState('');
   const [day, setDay] = useState<Date | undefined>(new Date());
   const [duration, setDuration] = useState('');
+  const [startTime, setStartTime] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [strict, setStrict] = useState(false);
 
@@ -33,10 +34,11 @@ export const ProjectTaskFormModal = ({ open, onClose, projectId, task }: Props) 
       setName(task.name);
       setDay(new Date(task.day));
       setDuration(String(task.duration));
+      setStartTime(task.startTime || '');
       setCategory(task.category);
       setStrict(task.strict);
     } else {
-      setName(''); setDay(new Date()); setDuration(''); setCategory(CATEGORIES[0]); setStrict(false);
+      setName(''); setDay(new Date()); setDuration(''); setStartTime(''); setCategory(CATEGORIES[0]); setStrict(false);
     }
   }, [task, open]);
 
@@ -48,6 +50,7 @@ export const ProjectTaskFormModal = ({ open, onClose, projectId, task }: Props) 
       name: name.trim(),
       day: format(day!, 'yyyy-MM-dd'),
       duration: parseInt(duration),
+      startTime: startTime || undefined,
       category,
       strict,
       projectId,
@@ -128,6 +131,18 @@ export const ProjectTaskFormModal = ({ open, onClose, projectId, task }: Props) 
                 max={480}
                 className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
               />
+            </div>
+
+            {/* Start time */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Heure de début</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={e => setStartTime(e.target.value)}
+                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+              />
+              <p className="text-[10px] text-muted-foreground">Optionnel — utilisé pour le planning</p>
             </div>
 
             {/* Category */}
