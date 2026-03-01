@@ -27,6 +27,12 @@ interface AppState {
   toggleProjectTask: (projectId: string, taskId: string) => void;
   addTimerSession: (projectId: string, taskId: string, session: TimerSession) => void;
   updateProjectTaskRealDuration: (projectId: string, taskId: string, seconds: number) => void;
+  // Routine CRUD
+  addRoutine: (routine: Omit<Routine, 'id' | 'completed' | 'streak'>) => void;
+  updateRoutine: (id: string, data: Partial<Routine>) => void;
+  deleteRoutine: (id: string) => void;
+  toggleRoutineActive: (id: string) => void;
+  toggleRoutineReminder: (id: string) => void;
   // Daily tasks CRUD
   addTask: (task: Omit<Task, 'id' | 'realDuration' | 'completed' | 'sessions' | 'status'>) => void;
   updateTask: (id: string, data: Partial<Task>) => void;
@@ -145,6 +151,24 @@ export const useAppStore = create<AppState>()(
       toggleRoutine: (id) => set((s) => ({
         routines: s.routines.map(r => r.id === id ? { ...r, completed: !r.completed } : r)
       })),
+
+      // Routine CRUD
+      addRoutine: (data) => set((s) => ({
+        routines: [...s.routines, { ...data, id: genId(), completed: false, streak: 0 }]
+      })),
+      updateRoutine: (id, data) => set((s) => ({
+        routines: s.routines.map(r => r.id === id ? { ...r, ...data } : r)
+      })),
+      deleteRoutine: (id) => set((s) => ({
+        routines: s.routines.filter(r => r.id !== id)
+      })),
+      toggleRoutineActive: (id) => set((s) => ({
+        routines: s.routines.map(r => r.id === id ? { ...r, active: !r.active } : r)
+      })),
+      toggleRoutineReminder: (id) => set((s) => ({
+        routines: s.routines.map(r => r.id === id ? { ...r, reminder: !r.reminder } : r)
+      })),
+
       updateSettings: (newSettings) => set((s) => ({
         settings: { ...s.settings, ...newSettings }
       })),
