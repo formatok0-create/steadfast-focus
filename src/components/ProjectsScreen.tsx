@@ -126,7 +126,6 @@ export const ProjectsScreen = () => {
                   </div>
                 </div>
 
-                {/* Dual progress bars */}
                 <div className="space-y-2">
                   <div>
                     <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
@@ -134,12 +133,7 @@ export const ProjectsScreen = () => {
                       <span className="font-mono">{Math.round(timeProgress)}%</span>
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full gradient-cool rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${timeProgress}%` }}
-                        transition={{ duration: 1, delay: 0.3 }}
-                      />
+                      <motion.div className="h-full gradient-cool rounded-full" initial={{ width: 0 }} animate={{ width: `${timeProgress}%` }} transition={{ duration: 1, delay: 0.3 }} />
                     </div>
                   </div>
                   <div>
@@ -148,12 +142,7 @@ export const ProjectsScreen = () => {
                       <span className="font-mono">{Math.round(taskProgress)}%</span>
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full gradient-fresh rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${taskProgress}%` }}
-                        transition={{ duration: 1, delay: 0.4 }}
-                      />
+                      <motion.div className="h-full gradient-fresh rounded-full" initial={{ width: 0 }} animate={{ width: `${taskProgress}%` }} transition={{ duration: 1, delay: 0.4 }} />
                     </div>
                   </div>
                 </div>
@@ -186,15 +175,15 @@ export const ProjectsScreen = () => {
 
 // ===== PROJECT DETAIL VIEW =====
 const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => void }) => {
-  const { updateProject, deleteProject, deleteProjectTask, toggleProjectTask } = useAppStore();
+  const { updateProject, deleteProject } = useAppStore();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   const completedTasks = project.tasks.filter(t => t.completed).length;
   const totalEstimated = project.tasks.reduce((a, t) => a + t.duration, 0);
   const totalReal = project.tasks.reduce((a, t) => a + t.realDuration, 0);
-  const cfg = statusConfig[project.status];
 
   const handleStatusChange = (status: Project['status']) => {
     updateProject(project.id, { status });
@@ -221,7 +210,7 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
           </motion.button>
         </div>
 
-        {/* Status & Priority */}
+        {/* Status */}
         <div className="flex gap-2">
           {(['en_cours', 'en_pause', 'terminé'] as const).map(st => (
             <motion.button
@@ -240,12 +229,7 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
         </div>
 
         {/* Time overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass-card-elevated p-6 space-y-4 relative overflow-hidden"
-        >
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card-elevated p-6 space-y-4 relative overflow-hidden">
           <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-10 gradient-cool blur-3xl" />
           <div className="flex items-center gap-2 mb-1">
             <div className="w-7 h-7 rounded-lg gradient-cool flex items-center justify-center">
@@ -296,20 +280,9 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
             <span className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Comparaison temps tâches</span>
           </div>
           <div className="flex gap-4 text-xs">
-            <div>
-              <span className="text-muted-foreground">Estimé : </span>
-              <span className="font-mono text-foreground">{totalEstimated} min</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Réel : </span>
-              <span className={`font-mono ${totalReal > totalEstimated ? 'text-destructive' : 'text-success'}`}>{totalReal} min</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Écart : </span>
-              <span className={`font-mono ${totalReal - totalEstimated > 0 ? 'text-destructive' : 'text-success'}`}>
-                {totalReal - totalEstimated > 0 ? '+' : ''}{totalReal - totalEstimated} min
-              </span>
-            </div>
+            <div><span className="text-muted-foreground">Estimé : </span><span className="font-mono text-foreground">{totalEstimated} min</span></div>
+            <div><span className="text-muted-foreground">Réel : </span><span className={`font-mono ${totalReal > totalEstimated ? 'text-destructive' : 'text-success'}`}>{totalReal} min</span></div>
+            <div><span className="text-muted-foreground">Écart : </span><span className={`font-mono ${totalReal - totalEstimated > 0 ? 'text-destructive' : 'text-success'}`}>{totalReal - totalEstimated > 0 ? '+' : ''}{totalReal - totalEstimated} min</span></div>
           </div>
         </div>
 
@@ -325,7 +298,7 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setShowTaskModal(true)}
+            onClick={() => { setEditingTask(null); setShowTaskModal(true); }}
             className="flex items-center gap-1 text-xs text-primary font-semibold bg-primary/10 px-3 py-1.5 rounded-xl"
           >
             <Plus size={14} />
@@ -341,6 +314,7 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
               projectId={project.id}
               expanded={expandedTaskId === task.id}
               onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+              onEdit={() => { setEditingTask(task); setShowTaskModal(true); }}
             />
           ))}
           {project.tasks.length === 0 && (
@@ -364,16 +338,21 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
       </motion.div>
 
       <ProjectFormModal open={showEditModal} onClose={() => setShowEditModal(false)} project={project} />
-      <ProjectTaskFormModal open={showTaskModal} onClose={() => setShowTaskModal(false)} projectId={project.id} />
+      <ProjectTaskFormModal
+        open={showTaskModal}
+        onClose={() => { setShowTaskModal(false); setEditingTask(null); }}
+        projectId={project.id}
+        task={editingTask}
+      />
     </>
   );
 };
 
 // ===== PROJECT TASK CARD =====
 const ProjectTaskCard = ({
-  task, projectId, expanded, onToggleExpand
+  task, projectId, expanded, onToggleExpand, onEdit
 }: {
-  task: Task; projectId: string; expanded: boolean; onToggleExpand: () => void;
+  task: Task; projectId: string; expanded: boolean; onToggleExpand: () => void; onEdit: () => void;
 }) => {
   const { toggleProjectTask, deleteProjectTask } = useAppStore();
 
@@ -403,11 +382,20 @@ const ProjectTaskCard = ({
             {task.strict && <span className="text-[10px] px-2 py-0.5 rounded-full bg-warning/15 text-warning font-bold">STRICT</span>}
           </div>
         </button>
-        <div className="text-right shrink-0">
-          <p className="text-xs font-mono text-muted-foreground">{task.duration}m</p>
-          <p className={`text-[10px] font-mono ${task.realDuration > task.duration ? 'text-destructive' : 'text-success'}`}>
-            {task.realDuration}m réel
-          </p>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="text-right">
+            <p className="text-xs font-mono text-muted-foreground">{task.duration}m</p>
+            <p className={`text-[10px] font-mono ${task.realDuration > task.duration ? 'text-destructive' : 'text-success'}`}>
+              {task.realDuration}m réel
+            </p>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.8 }}
+            onClick={onEdit}
+            className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Edit3 size={12} />
+          </motion.button>
         </div>
       </div>
 
@@ -429,13 +417,9 @@ const ProjectTaskCard = ({
                 {task.sessions.map((session, i) => (
                   <div key={session.id} className="flex items-center gap-2 text-[10px] text-muted-foreground">
                     <div className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center font-mono text-primary text-[8px] font-bold">{i + 1}</div>
-                    <span className="font-mono">
-                      {session.startTime ? format(new Date(session.startTime), 'dd/MM HH:mm', { locale: fr }) : '—'}
-                    </span>
+                    <span className="font-mono">{session.startTime ? format(new Date(session.startTime), 'dd/MM HH:mm', { locale: fr }) : '—'}</span>
                     <span className="text-foreground/40">→</span>
-                    <span className="font-mono">
-                      {session.endTime ? format(new Date(session.endTime), 'HH:mm', { locale: fr }) : '—'}
-                    </span>
+                    <span className="font-mono">{session.endTime ? format(new Date(session.endTime), 'HH:mm', { locale: fr }) : '—'}</span>
                     <span className="ml-auto font-mono text-foreground font-semibold">{session.duration} min</span>
                   </div>
                 ))}
