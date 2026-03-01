@@ -1,12 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { BottomNav } from '@/components/BottomNav';
+import { DashboardScreen } from '@/components/DashboardScreen';
+import { ProjectsScreen } from '@/components/ProjectsScreen';
+import { TasksScreen } from '@/components/TasksScreen';
+import { SkillsScreen } from '@/components/SkillsScreen';
+import { PlanningScreen } from '@/components/PlanningScreen';
+import { useAppStore } from '@/stores/appStore';
+import { AnimatePresence, motion } from 'framer-motion';
+
+const screens: Record<string, React.FC> = {
+  dashboard: DashboardScreen,
+  projects: ProjectsScreen,
+  tasks: TasksScreen,
+  skills: SkillsScreen,
+  planning: PlanningScreen,
+};
 
 const Index = () => {
+  const { activeTab } = useAppStore();
+  const Screen = screens[activeTab] || DashboardScreen;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background max-w-md mx-auto relative overflow-hidden">
+      <div className="safe-area-top pt-4" />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.25 }}
+          className="overflow-y-auto"
+        >
+          <Screen />
+        </motion.div>
+      </AnimatePresence>
+      <BottomNav />
     </div>
   );
 };
