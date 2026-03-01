@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { Settings, Moon, Sun, Minimize2, Bell, Shield, Download, Eye, EyeOff } from 'lucide-react';
+import { Settings, Moon, Sun, Minimize2, Bell, Shield, Download, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-
+import { useState } from 'react';
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.06 } },
@@ -36,7 +36,8 @@ const sectionLabels: Record<string, string> = {
 };
 
 export const SettingsScreen = () => {
-  const { settings, updateSettings } = useAppStore();
+  const { settings, updateSettings, resetAll } = useAppStore();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const toggleSection = (section: string) => {
     const current = settings.enabledSections;
@@ -194,6 +195,38 @@ export const SettingsScreen = () => {
           <Download size={16} />
           Exporter les données
         </button>
+      </motion.div>
+
+      {/* Reset all */}
+      <motion.div variants={item} className="space-y-2">
+        {!showResetConfirm ? (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="glass-card p-4 w-full flex items-center justify-center gap-2 text-sm font-medium text-destructive border border-destructive/20"
+          >
+            <Trash2 size={16} />
+            Réinitialiser toute l'application
+          </button>
+        ) : (
+          <div className="glass-card-elevated p-5 space-y-3 border border-destructive/30">
+            <p className="text-sm font-semibold text-destructive text-center">⚠️ Supprimer toutes les données ?</p>
+            <p className="text-xs text-muted-foreground text-center">Tâches, projets, routines, compétences, formations, objectifs et revues seront supprimés définitivement.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl bg-muted text-sm font-medium text-foreground"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => { resetAll(); setShowResetConfirm(false); }}
+                className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold"
+              >
+                Tout supprimer
+              </button>
+            </div>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
