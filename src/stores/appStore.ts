@@ -27,6 +27,11 @@ interface AppState {
   toggleProjectTask: (projectId: string, taskId: string) => void;
   addTimerSession: (projectId: string, taskId: string, session: TimerSession) => void;
   updateProjectTaskRealDuration: (projectId: string, taskId: string, seconds: number) => void;
+  // Skill CRUD
+  addSkill: (skill: Omit<Skill, 'id' | 'realTime'>) => void;
+  updateSkill: (id: string, data: Partial<Skill>) => void;
+  deleteSkill: (id: string) => void;
+  toggleSkillActive: (id: string) => void;
   // Routine CRUD
   addRoutine: (routine: Omit<Routine, 'id' | 'completed' | 'streak'>) => void;
   updateRoutine: (id: string, data: Partial<Routine>) => void;
@@ -151,6 +156,30 @@ export const useAppStore = create<AppState>()(
       toggleRoutine: (id) => set((s) => ({
         routines: s.routines.map(r => r.id === id ? { ...r, completed: !r.completed } : r)
       })),
+
+      // Skill CRUD
+      addSkill: (data) => set((s) => {
+        const activeCount = s.skills.filter(sk => sk.active).length;
+        if (data.active && activeCount >= s.settings.maxActiveSkills) {
+          return s; // limit reached
+        }
+        return { skills: [...s.skills, { ...data, id: genId(), realTime: 0 }] };
+      }),
+      updateSkill: (id, data) => set((s) => ({
+        skills: s.skills.map(sk => sk.id === id ? { ...sk, ...data } : sk)
+      })),
+      deleteSkill: (id) => set((s) => ({
+        skills: s.skills.filter(sk => sk.id !== id)
+      })),
+      toggleSkillActive: (id) => set((s) => {
+        const skill = s.skills.find(sk => sk.id === id);
+        if (!skill) return s;
+        if (!skill.active) {
+          const activeCount = s.skills.filter(sk => sk.active).length;
+          if (activeCount >= s.settings.maxActiveSkills) return s;
+        }
+        return { skills: s.skills.map(sk => sk.id === id ? { ...sk, active: !sk.active } : sk) };
+      }),
 
       // Routine CRUD
       addRoutine: (data) => set((s) => ({
