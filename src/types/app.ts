@@ -107,6 +107,11 @@ export interface DailyReview {
   id: string;
   day: string;
   honorable: boolean;
+  taskRate: number; // % tasks completed
+  routineRate: number; // % routines completed
   notes: string;
+  wins: string;
+  lesson: string;
+  mood: 'excellent' | 'bon' | 'moyen' | 'difficile';
   completedAt: number;
 }
