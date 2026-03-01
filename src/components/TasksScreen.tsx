@@ -8,6 +8,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
 
 const container = {
   hidden: { opacity: 0 },
@@ -197,6 +198,7 @@ const TaskCard = ({ task, onEdit }: { task: Task; onEdit: () => void }) => {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showAvoidModal, setShowAvoidModal] = useState(false);
   const [avoidReason, setAvoidReason] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!running) return;
@@ -395,12 +397,20 @@ const TaskCard = ({ task, onEdit }: { task: Task; onEdit: () => void }) => {
         {/* Delete */}
         <motion.button
           whileTap={{ scale: 0.95 }}
-          onClick={() => deleteTask(task.id)}
+          onClick={() => setConfirmDelete(true)}
           className="flex items-center gap-1 text-[10px] text-destructive/60 font-medium pt-1 hover:text-destructive transition-colors"
         >
           <Trash2 size={10} />
           Supprimer
         </motion.button>
+
+        <ConfirmDeleteModal
+          open={confirmDelete}
+          title="Supprimer cette tâche ?"
+          message="La tâche et ses sessions seront supprimées."
+          onConfirm={() => { deleteTask(task.id); setConfirmDelete(false); }}
+          onCancel={() => setConfirmDelete(false)}
+        />
       </motion.div>
 
       {/* Avoid reason modal */}

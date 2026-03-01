@@ -8,6 +8,7 @@ import { fr } from 'date-fns/locale';
 import { ProjectFormModal } from './ProjectFormModal';
 import { ProjectTaskFormModal } from './ProjectTaskFormModal';
 import { ProjectTaskChrono } from './ProjectTaskChrono';
+import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
 
 const container = {
   hidden: { opacity: 0 },
@@ -180,6 +181,7 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [confirmDeleteProject, setConfirmDeleteProject] = useState(false);
 
   const completedTasks = project.tasks.filter(t => t.completed).length;
   const totalEstimated = project.tasks.reduce((a, t) => a + t.duration, 0);
@@ -328,13 +330,21 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
         <div className="pt-4">
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={() => { deleteProject(project.id); onBack(); }}
+            onClick={() => setConfirmDeleteProject(true)}
             className="w-full py-3 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors"
           >
             <Trash2 size={14} />
             Supprimer ce projet
           </motion.button>
         </div>
+
+        <ConfirmDeleteModal
+          open={confirmDeleteProject}
+          title="Supprimer ce projet ?"
+          message="Toutes les tâches du projet seront supprimées."
+          onConfirm={() => { deleteProject(project.id); onBack(); }}
+          onCancel={() => setConfirmDeleteProject(false)}
+        />
       </motion.div>
 
       <ProjectFormModal open={showEditModal} onClose={() => setShowEditModal(false)} project={project} />
@@ -355,6 +365,7 @@ const ProjectTaskCard = ({
   task: Task; projectId: string; expanded: boolean; onToggleExpand: () => void; onEdit: () => void;
 }) => {
   const { toggleProjectTask, deleteProjectTask } = useAppStore();
+  const [confirmDeleteTask, setConfirmDeleteTask] = useState(false);
 
   return (
     <motion.div
@@ -428,12 +439,20 @@ const ProjectTaskCard = ({
 
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={() => deleteProjectTask(projectId, task.id)}
+              onClick={() => setConfirmDeleteTask(true)}
               className="flex items-center gap-1 text-[10px] text-destructive/60 font-medium pt-1 hover:text-destructive transition-colors"
             >
               <Trash2 size={10} />
               Supprimer
             </motion.button>
+
+            <ConfirmDeleteModal
+              open={confirmDeleteTask}
+              title="Supprimer cette tâche ?"
+              message="La tâche et ses sessions seront supprimées."
+              onConfirm={() => { deleteProjectTask(projectId, task.id); setConfirmDeleteTask(false); }}
+              onCancel={() => setConfirmDeleteTask(false)}
+            />
           </motion.div>
         )}
       </AnimatePresence>
