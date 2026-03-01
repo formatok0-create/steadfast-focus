@@ -1,27 +1,25 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, TrendingUp, Plus, Edit2, Trash2, Link, BookOpen, FolderOpen, CheckSquare, AlertTriangle, Power } from 'lucide-react';
+import { Target, TrendingUp, Plus, Edit2, Trash2, Link, BookOpen, FolderOpen, CheckSquare, AlertTriangle, Power, Zap, Clock } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Skill } from '@/types/app';
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
 };
 
 const levelColors: Record<string, string> = {
   'débutant': 'text-accent',
   'intermédiaire': 'text-primary',
-  'avancé': 'text-green-400',
+  'avancé': 'text-success',
 };
 
 const levelLabels: Record<string, string> = {
@@ -37,7 +35,6 @@ export const SkillsScreen = () => {
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Form state
   const [name, setName] = useState('');
   const [objective, setObjective] = useState('');
   const [level, setLevel] = useState<Skill['level']>('débutant');
@@ -67,52 +64,56 @@ export const SkillsScreen = () => {
     setShowModal(false);
   };
 
-  const getLinkedProjects = (skillId: string) =>
-    projects.filter(p => p.tasks.some(t => t.skillId === skillId));
-
-  const getLinkedFormations = (skillId: string) =>
-    formations.filter(f => f.skillId === skillId);
-
-  const getLinkedTasks = (skillId: string) =>
-    tasks.filter(t => t.skillId === skillId);
+  const getLinkedProjects = (skillId: string) => projects.filter(p => p.tasks.some(t => t.skillId === skillId));
+  const getLinkedFormations = (skillId: string) => formations.filter(f => f.skillId === skillId);
+  const getLinkedTasks = (skillId: string) => tasks.filter(t => t.skillId === skillId);
 
   const canActivate = activeSkills.length < settings.maxActiveSkills;
+  const totalRealTime = skills.reduce((a, s) => a + s.realTime, 0);
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
       <motion.div variants={item} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Compétences</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Compétences<span className="text-gradient">.</span></h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeSkills.length}/{settings.maxActiveSkills} actives — max {settings.maxActiveSkills} en parallèle
+            {activeSkills.length}/{settings.maxActiveSkills} actives
           </p>
         </div>
-        <Button size="sm" onClick={openCreate} className="gap-1.5">
-          <Plus size={14} /> Ajouter
-        </Button>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={openCreate}
+          className="w-11 h-11 rounded-2xl gradient-primary flex items-center justify-center text-white shadow-lg glow-primary"
+        >
+          <Plus size={20} />
+        </motion.button>
       </motion.div>
 
       {/* Limit warning */}
       {activeSkills.length >= settings.maxActiveSkills && (
         <motion.div variants={item} className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
           <AlertTriangle size={14} className="text-destructive" />
-          <span className="text-xs text-destructive">Limite atteinte — désactive une compétence pour en ajouter une nouvelle.</span>
+          <span className="text-xs text-destructive font-medium">Limite atteinte — désactive une compétence pour en ajouter une nouvelle.</span>
         </motion.div>
       )}
 
       {/* Stats overview */}
       <motion.div variants={item} className="grid grid-cols-3 gap-3">
-        <div className="glass-card p-3 text-center">
-          <p className="text-xl font-bold font-mono text-foreground">{skills.length}</p>
-          <p className="text-[10px] text-muted-foreground">Total</p>
+        <div className="stat-card stat-card-blue text-center">
+          <Target size={18} className="mx-auto mb-2 text-primary" />
+          <p className="text-2xl font-black text-foreground">{skills.length}</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Total</p>
         </div>
-        <div className="glass-card p-3 text-center">
-          <p className="text-xl font-bold font-mono text-primary">{activeSkills.length}</p>
-          <p className="text-[10px] text-muted-foreground">Actives</p>
+        <div className="stat-card stat-card-violet text-center">
+          <Zap size={18} className="mx-auto mb-2 text-accent" />
+          <p className="text-2xl font-black text-foreground">{activeSkills.length}</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Actives</p>
         </div>
-        <div className="glass-card p-3 text-center">
-          <p className="text-xl font-bold font-mono text-foreground">{skills.reduce((a, s) => a + s.realTime, 0)}h</p>
-          <p className="text-[10px] text-muted-foreground">Temps total</p>
+        <div className="stat-card stat-card-amber text-center">
+          <Clock size={18} className="mx-auto mb-2 text-warning" />
+          <p className="text-2xl font-black text-foreground">{totalRealTime}h</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Temps total</p>
         </div>
       </motion.div>
 
@@ -128,24 +129,30 @@ export const SkillsScreen = () => {
           <motion.div
             key={skill.id}
             variants={item}
-            className={`glass-card-elevated p-5 space-y-4 transition-opacity ${!skill.active ? 'opacity-50' : ''}`}
+            whileHover={{ scale: 1.01, y: -1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className={`glass-card-elevated p-5 space-y-4 relative overflow-hidden ${!skill.active ? 'opacity-50' : ''}`}
           >
+            <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-5 gradient-primary blur-2xl" />
+
             {/* Header */}
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between relative z-10">
               <div
                 className="flex items-center gap-2 flex-1 cursor-pointer"
                 onClick={() => setExpandedId(isExpanded ? null : skill.id)}
               >
-                <Target size={16} className="text-primary" />
-                <h3 className="font-semibold text-foreground">{skill.name}</h3>
+                <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
+                  <Target size={14} className="text-white" />
+                </div>
+                <h3 className="font-bold text-foreground">{skill.name}</h3>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`text-xs font-semibold ${levelColors[skill.level]}`}>
+                <span className={`text-xs font-bold ${levelColors[skill.level]}`}>
                   {levelLabels[skill.level]}
                 </span>
-                <button onClick={() => toggleSkillActive(skill.id)} className="p-1 rounded hover:bg-muted/50">
+                <motion.button whileTap={{ scale: 0.8 }} onClick={() => toggleSkillActive(skill.id)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
                   <Power size={12} className={skill.active ? 'text-primary' : 'text-muted-foreground'} />
-                </button>
+                </motion.button>
               </div>
             </div>
 
@@ -155,11 +162,11 @@ export const SkillsScreen = () => {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-2xl font-bold font-mono text-foreground">{skill.realTime}h</p>
+                <p className="text-2xl font-black font-mono text-foreground">{skill.realTime}<span className="text-primary">h</span></p>
                 <p className="text-[10px] text-muted-foreground">Heures réelles</p>
               </div>
               <div>
-                <p className="text-2xl font-bold font-mono text-muted-foreground">{skill.weeklyTarget}h</p>
+                <p className="text-2xl font-black font-mono text-muted-foreground">{skill.weeklyTarget}h</p>
                 <p className="text-[10px] text-muted-foreground">Objectif / semaine</p>
               </div>
             </div>
@@ -167,17 +174,24 @@ export const SkillsScreen = () => {
             {/* Progress bar */}
             <div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1.5">
-                <TrendingUp size={12} />
-                <span>Progression globale — {Math.round(weeklyProgress)}%</span>
+                <TrendingUp size={12} className="text-primary" />
+                <span className="font-medium">Progression — {Math.round(weeklyProgress)}%</span>
               </div>
-              <Progress value={weeklyProgress} className="h-2" />
+              <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full gradient-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${weeklyProgress}%` }}
+                  transition={{ duration: 1, delay: 0.3 }}
+                />
+              </div>
             </div>
 
             {/* Linked items summary */}
             <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1"><FolderOpen size={10} />{linkedProjects.length} projet(s)</span>
-              <span className="flex items-center gap-1"><BookOpen size={10} />{linkedFormations.length} formation(s)</span>
-              <span className="flex items-center gap-1"><CheckSquare size={10} />{linkedTasks.length} tâche(s)</span>
+              <span className="flex items-center gap-1"><FolderOpen size={10} className="text-primary" />{linkedProjects.length} projet(s)</span>
+              <span className="flex items-center gap-1"><BookOpen size={10} className="text-accent" />{linkedFormations.length} formation(s)</span>
+              <span className="flex items-center gap-1"><CheckSquare size={10} className="text-success" />{linkedTasks.length} tâche(s)</span>
             </div>
 
             {/* Expanded details */}
@@ -191,12 +205,12 @@ export const SkillsScreen = () => {
                 >
                   {linkedProjects.length > 0 && (
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1 font-bold">
                         <Link size={10} /> Projets liés
                       </p>
                       {linkedProjects.map(p => (
-                        <div key={p.id} className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2 mb-1">
-                          <span className="text-xs text-foreground">{p.name}</span>
+                        <div key={p.id} className="flex items-center justify-between glass-card-bright rounded-xl px-3 py-2 mb-1">
+                          <span className="text-xs text-foreground font-medium">{p.name}</span>
                           <span className="text-[10px] text-muted-foreground">{p.status.replace('_', ' ')}</span>
                         </div>
                       ))}
@@ -204,15 +218,15 @@ export const SkillsScreen = () => {
                   )}
                   {linkedFormations.length > 0 && (
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1 font-bold">
                         <BookOpen size={10} /> Formations liées
                       </p>
                       {linkedFormations.map(f => {
                         const totalSessions = f.modules.reduce((a, m) => a + m.sessions.length, 0);
                         const done = f.modules.reduce((a, m) => a + m.sessions.filter(s => s.completed).length, 0);
                         return (
-                          <div key={f.id} className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2 mb-1">
-                            <span className="text-xs text-foreground">{f.name}</span>
+                          <div key={f.id} className="flex items-center justify-between glass-card-bright rounded-xl px-3 py-2 mb-1">
+                            <span className="text-xs text-foreground font-medium">{f.name}</span>
                             <span className="text-[10px] text-muted-foreground">{done}/{totalSessions} séances</span>
                           </div>
                         );
@@ -221,13 +235,13 @@ export const SkillsScreen = () => {
                   )}
                   {linkedTasks.length > 0 && (
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1 font-bold">
                         <CheckSquare size={10} /> Tâches liées
                       </p>
                       {linkedTasks.slice(0, 5).map(t => (
-                        <div key={t.id} className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2 mb-1">
-                          <span className="text-xs text-foreground">{t.name}</span>
-                          <span className={`text-[10px] ${t.completed ? 'text-green-400' : 'text-muted-foreground'}`}>
+                        <div key={t.id} className="flex items-center justify-between glass-card-bright rounded-xl px-3 py-2 mb-1">
+                          <span className="text-xs text-foreground font-medium">{t.name}</span>
+                          <span className={`text-[10px] ${t.completed ? 'text-success' : 'text-muted-foreground'}`}>
                             {t.completed ? '✅' : `${t.duration}min`}
                           </span>
                         </div>
@@ -240,12 +254,20 @@ export const SkillsScreen = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(skill)} className="gap-1 text-xs flex-1">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => openEdit(skill)}
+                      className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl bg-muted text-foreground text-xs font-semibold hover:bg-muted/80 transition-colors"
+                    >
                       <Edit2 size={12} /> Modifier
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => deleteSkill(skill.id)} className="gap-1 text-xs text-destructive hover:text-destructive">
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => deleteSkill(skill.id)}
+                      className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-colors"
+                    >
                       <Trash2 size={12} /> Supprimer
-                    </Button>
+                    </motion.button>
                   </div>
                 </motion.div>
               )}
@@ -255,8 +277,9 @@ export const SkillsScreen = () => {
       })}
 
       {skills.length === 0 && (
-        <motion.div variants={item} className="glass-card p-8 text-center">
-          <Target size={32} className="mx-auto text-muted-foreground mb-3" />
+        <motion.div variants={item} className="glass-card-bright p-10 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5 gradient-primary" />
+          <Target size={40} className="mx-auto text-muted-foreground mb-3" />
           <p className="text-sm text-muted-foreground">Aucune compétence. Commence par en créer une.</p>
         </motion.div>
       )}
@@ -264,22 +287,29 @@ export const SkillsScreen = () => {
       {/* Create/Edit Modal */}
       <AnimatePresence>
         {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-            onClick={() => setShowModal(false)}
-          >
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+              onClick={() => setShowModal(false)}
+            />
             <motion.div
               initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
-              className="glass-card-elevated w-full max-w-md p-6 space-y-4 max-h-[85vh] overflow-y-auto"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="fixed inset-x-3 bottom-0 z-50 glass-card-elevated rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
-              <h2 className="text-lg font-bold text-foreground">
-                {editingSkill ? 'Modifier la compétence' : 'Nouvelle compétence'}
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-foreground">
+                  {editingSkill ? 'Modifier la compétence' : 'Nouvelle compétence'}
+                </h2>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground">
+                  ✕
+                </motion.button>
+              </div>
 
               {!canActivate && !editingSkill && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 text-xs text-destructive">
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-destructive/10 text-xs text-destructive">
                   <AlertTriangle size={12} />
                   Limite de {settings.maxActiveSkills} compétences actives atteinte. La nouvelle sera inactive.
                 </div>
@@ -287,17 +317,17 @@ export const SkillsScreen = () => {
 
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs">Nom</Label>
-                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: React / TypeScript" />
+                  <Label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Nom</Label>
+                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: React / TypeScript" className="mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs">Objectif mesurable</Label>
-                  <Input value={objective} onChange={e => setObjective(e.target.value)} placeholder="Ex: Maîtrise complète des hooks" />
+                  <Label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Objectif mesurable</Label>
+                  <Input value={objective} onChange={e => setObjective(e.target.value)} placeholder="Ex: Maîtrise complète des hooks" className="mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs">Niveau</Label>
+                  <Label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Niveau</Label>
                   <Select value={level} onValueChange={(v) => setLevel(v as Skill['level'])}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="débutant">🌱 Débutant</SelectItem>
                       <SelectItem value="intermédiaire">📈 Intermédiaire</SelectItem>
@@ -306,19 +336,30 @@ export const SkillsScreen = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Temps hebdo engagé (heures)</Label>
-                  <Input type="number" min={1} value={weeklyTarget} onChange={e => setWeeklyTarget(Number(e.target.value))} />
+                  <Label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Temps hebdo engagé (heures)</Label>
+                  <Input type="number" min={1} value={weeklyTarget} onChange={e => setWeeklyTarget(Number(e.target.value))} className="mt-1" />
                 </div>
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" onClick={() => setShowModal(false)} className="flex-1">Annuler</Button>
-                <Button onClick={handleSave} className="flex-1" disabled={!name.trim()}>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-semibold"
+                >
+                  Annuler
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleSave}
+                  disabled={!name.trim()}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold ${name.trim() ? 'gradient-primary text-white shadow-lg glow-primary' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
+                >
                   {editingSkill ? 'Enregistrer' : 'Créer'}
-                </Button>
+                </motion.button>
               </div>
             </motion.div>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.div>

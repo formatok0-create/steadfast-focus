@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Circle, Flame, Sun, Moon, Dumbbell, Brain, Sparkles, Plus, Trash2, Bell, BellOff, Eye, EyeOff, X, Edit3, BarChart3 } from 'lucide-react';
+import { CheckCircle2, Circle, Flame, Sun, Moon, Dumbbell, Brain, Sparkles, Plus, Trash2, Bell, BellOff, Eye, EyeOff, X, Edit3, BarChart3, TrendingUp, Zap } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import type { Routine } from '@/types/app';
 
@@ -9,8 +9,8 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.06 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
 };
 
 const categoryConfig = {
@@ -34,6 +34,7 @@ export const RoutinesScreen = () => {
   const constanceRate = activeRoutines.length > 0 ? Math.round((completed / activeRoutines.length) * 100) : 0;
   const totalStreak = activeRoutines.reduce((a, r) => a + r.streak, 0);
   const avgStreak = activeRoutines.length > 0 ? Math.round(totalStreak / activeRoutines.length) : 0;
+  const bestStreak = Math.max(...activeRoutines.map(r => r.streak), 0);
 
   return (
     <>
@@ -41,63 +42,78 @@ export const RoutinesScreen = () => {
         {/* Header */}
         <motion.div variants={item} className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Routines</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Routines<span className="text-gradient">.</span></h1>
             <p className="text-sm text-muted-foreground mt-1">
               {completed}/{activeRoutines.length} validées · {routines.length} total
             </p>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setShowCreateModal(true)}
-            className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary"
+            className="w-11 h-11 rounded-2xl gradient-warm flex items-center justify-center text-white shadow-lg"
           >
             <Plus size={20} />
-          </button>
+          </motion.button>
         </motion.div>
 
-        {/* Constance stats */}
-        <motion.div variants={item} className="glass-card-elevated p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 size={16} className="text-primary" />
-            <span className="text-sm font-semibold text-foreground/80">Constance</span>
+        {/* Quick Stats */}
+        <motion.div variants={item} className="grid grid-cols-3 gap-3">
+          <div className="stat-card stat-card-green text-center">
+            <TrendingUp size={18} className="mx-auto mb-2 text-success" />
+            <p className="text-2xl font-black text-foreground">{constanceRate}%</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Constance</p>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="text-center">
-              <p className="text-2xl font-bold font-mono text-foreground">{constanceRate}%</p>
-              <p className="text-[10px] text-muted-foreground">Taux du jour</p>
-              <div className="mt-1.5 h-1 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className={`h-full rounded-full ${constanceRate >= 80 ? 'bg-success' : constanceRate >= 50 ? 'bg-warning' : 'bg-destructive'}`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${constanceRate}%` }}
-                  transition={{ duration: 1, delay: 0.3 }}
-                />
-              </div>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold font-mono text-warning">{avgStreak}</p>
-              <p className="text-[10px] text-muted-foreground">Streak moyen</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold font-mono text-accent">{Math.max(...activeRoutines.map(r => r.streak), 0)}</p>
-              <p className="text-[10px] text-muted-foreground">Meilleur streak</p>
-            </div>
+          <div className="stat-card stat-card-amber text-center">
+            <Flame size={18} className="mx-auto mb-2 text-warning" />
+            <p className="text-2xl font-black text-foreground">{avgStreak}</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Streak moy.</p>
           </div>
+          <div className="stat-card stat-card-violet text-center">
+            <Zap size={18} className="mx-auto mb-2 text-accent" />
+            <p className="text-2xl font-black text-foreground">{bestStreak}</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Meilleur</p>
+          </div>
+        </motion.div>
+
+        {/* Constance progress */}
+        <motion.div variants={item} className="glass-card-elevated p-5 relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-10 gradient-warm blur-3xl" />
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg gradient-warm flex items-center justify-center">
+              <BarChart3 size={14} className="text-white" />
+            </div>
+            <span className="text-sm font-bold text-foreground/80">Progression du jour</span>
+          </div>
+          <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full ${constanceRate >= 80 ? 'gradient-fresh' : constanceRate >= 50 ? 'gradient-warm' : 'bg-destructive'}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${constanceRate}%` }}
+              transition={{ duration: 1, delay: 0.3 }}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2 font-mono text-right">{completed}/{activeRoutines.length} validées</p>
         </motion.div>
 
         {/* Streak overview */}
-        <motion.div variants={item} className="glass-card p-4">
+        <motion.div variants={item} className="glass-card-bright p-4">
           <div className="flex items-center gap-2 mb-3">
             <Flame size={16} className="text-warning" />
-            <span className="text-xs font-semibold text-foreground/80">Streaks actifs</span>
+            <span className="text-xs font-bold text-foreground/80">Streaks actifs</span>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-1">
             {activeRoutines.filter(r => r.streak > 0).sort((a, b) => b.streak - a.streak).map(r => (
-              <div key={r.id} className="flex flex-col items-center gap-1 shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
-                  <span className="text-sm font-bold font-mono text-warning">{r.streak}</span>
+              <motion.div
+                key={r.id}
+                whileHover={{ scale: 1.1, y: -2 }}
+                className="flex flex-col items-center gap-1 shrink-0"
+              >
+                <div className="w-11 h-11 rounded-2xl bg-warning/10 flex items-center justify-center border border-warning/20">
+                  <span className="text-sm font-black font-mono text-warning">{r.streak}</span>
                 </div>
                 <span className="text-[9px] text-muted-foreground text-center max-w-[56px] truncate">{r.name.split('—')[0].trim()}</span>
-              </div>
+              </motion.div>
             ))}
             {activeRoutines.filter(r => r.streak > 0).length === 0 && (
               <p className="text-xs text-muted-foreground">Aucun streak actif</p>
@@ -118,8 +134,10 @@ export const RoutinesScreen = () => {
             <motion.div key={cat} variants={item}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <CatIcon size={14} className={cfg.color} />
-                  <span className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">{cfg.label}</span>
+                  <div className={`w-6 h-6 rounded-lg ${cfg.bg} flex items-center justify-center`}>
+                    <CatIcon size={12} className={cfg.color} />
+                  </div>
+                  <span className="text-xs font-bold text-foreground/70 uppercase tracking-wider">{cfg.label}</span>
                 </div>
                 <span className="text-[10px] font-mono text-muted-foreground">{catCompleted}/{catActive}</span>
               </div>
@@ -139,7 +157,9 @@ export const RoutinesScreen = () => {
         })}
 
         {routines.length === 0 && (
-          <motion.div variants={item} className="glass-card p-8 text-center">
+          <motion.div variants={item} className="glass-card-bright p-10 text-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-5 gradient-warm" />
+            <Flame size={40} className="mx-auto mb-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Aucune routine. Crée ta première routine.</p>
           </motion.div>
         )}
@@ -164,30 +184,36 @@ const RoutineCard = ({
   const cfg = categoryConfig[routine.category];
 
   return (
-    <div className={`glass-card p-3.5 space-y-2 ${!routine.active ? 'opacity-50' : ''}`}>
+    <motion.div
+      whileHover={{ scale: 1.01, y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className={`glass-card-bright p-4 space-y-2 ${!routine.active ? 'opacity-50' : ''}`}
+    >
       <div className="flex items-center gap-3">
-        <button onClick={() => routine.active && toggleRoutine(routine.id)} disabled={!routine.active}>
+        <motion.button whileTap={{ scale: 0.8 }} onClick={() => routine.active && toggleRoutine(routine.id)} disabled={!routine.active}>
           {routine.completed && routine.active ? (
-            <CheckCircle2 size={18} className="text-success shrink-0" />
+            <div className="w-6 h-6 rounded-full gradient-fresh flex items-center justify-center">
+              <CheckCircle2 size={14} className="text-white" />
+            </div>
           ) : (
-            <Circle size={18} className="text-muted-foreground shrink-0" />
+            <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 hover:border-primary/60 transition-colors" />
           )}
-        </button>
+        </motion.button>
         <button onClick={onToggleExpand} className="flex-1 min-w-0 text-left">
-          <p className={`text-sm font-medium ${routine.completed && routine.active ? 'line-through text-muted-foreground' : !routine.active ? 'text-muted-foreground' : 'text-foreground'}`}>
+          <p className={`text-sm font-semibold ${routine.completed && routine.active ? 'line-through text-muted-foreground' : !routine.active ? 'text-muted-foreground' : 'text-foreground'}`}>
             {routine.name}
           </p>
           <div className="flex gap-1.5 mt-1">
-            <span className={`text-[9px] px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{routine.frequency}</span>
+            <span className={`text-[9px] px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color} font-medium`}>{cfg.label}</span>
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{routine.frequency}</span>
             {routine.reminder && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">🔔</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">🔔</span>
             )}
           </div>
         </button>
-        <div className="flex items-center gap-1 text-xs text-accent shrink-0">
-          <Flame size={12} />
-          <span className="font-mono">{routine.streak}j</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning/10 shrink-0">
+          <Flame size={12} className="text-warning" />
+          <span className="text-xs font-mono font-black text-warning">{routine.streak}j</span>
         </div>
       </div>
 
@@ -197,48 +223,53 @@ const RoutineCard = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="space-y-3 pt-2 border-t border-border/50 overflow-hidden"
+            className="space-y-3 pt-3 border-t border-border/50 overflow-hidden"
           >
             {/* Controls */}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-foreground/70">Active</span>
-              <button
+              <span className="text-xs text-foreground/70 font-medium">Active</span>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
                 onClick={() => toggleRoutineActive(routine.id)}
                 className="flex items-center gap-1.5 text-xs"
               >
                 {routine.active ? (
-                  <><Eye size={14} className="text-primary" /><span className="text-primary">Oui</span></>
+                  <><Eye size={14} className="text-primary" /><span className="text-primary font-semibold">Oui</span></>
                 ) : (
                   <><EyeOff size={14} className="text-muted-foreground" /><span className="text-muted-foreground">Non</span></>
                 )}
-              </button>
+              </motion.button>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-xs text-foreground/70">Rappel discret</span>
-              <button
+              <span className="text-xs text-foreground/70 font-medium">Rappel discret</span>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
                 onClick={() => toggleRoutineReminder(routine.id)}
                 className="flex items-center gap-1.5 text-xs"
               >
                 {routine.reminder ? (
-                  <><Bell size={14} className="text-primary" /><span className="text-primary">Activé</span></>
+                  <><Bell size={14} className="text-primary" /><span className="text-primary font-semibold">Activé</span></>
                 ) : (
                   <><BellOff size={14} className="text-muted-foreground" /><span className="text-muted-foreground">Désactivé</span></>
                 )}
-              </button>
+              </motion.button>
             </div>
 
             {/* Streak visual */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Constance (streak)</span>
-                <span className="font-mono text-warning">{routine.streak} jours</span>
+                <span className="font-medium">Constance (streak)</span>
+                <span className="font-mono font-bold text-warning">{routine.streak} jours</span>
               </div>
-              <div className="flex gap-0.5">
+              <div className="flex gap-1">
                 {Array.from({ length: 7 }).map((_, i) => (
-                  <div
+                  <motion.div
                     key={i}
-                    className={`flex-1 h-2 rounded-sm ${
+                    initial={{ scaleY: 0 }}
+                    animate={{ scaleY: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`flex-1 h-3 rounded-sm ${
                       i < Math.min(routine.streak, 7) ? 'bg-warning/60' : 'bg-muted'
                     }`}
                   />
@@ -249,23 +280,25 @@ const RoutineCard = ({
 
             {/* Actions */}
             <div className="flex gap-2">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={onEdit}
-                className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-muted text-foreground text-[10px] font-medium"
+                className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl bg-muted text-foreground text-[10px] font-semibold hover:bg-muted/80 transition-colors"
               >
                 <Edit3 size={12} /> Modifier
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => deleteRoutine(routine.id)}
-                className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-[10px] font-medium"
+                className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive text-[10px] font-semibold hover:bg-destructive/20 transition-colors"
               >
                 <Trash2 size={12} />
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 
@@ -299,25 +332,11 @@ const RoutineFormModal = ({ open, onClose, routine }: { open: boolean; onClose: 
   const handleSubmit = () => {
     if (!canSubmit) return;
     if (isEdit && routine) {
-      updateRoutine(routine.id, {
-        name: name.trim(),
-        category,
-        frequency,
-        reminder,
-      });
+      updateRoutine(routine.id, { name: name.trim(), category, frequency, reminder });
     } else {
-      addRoutine({
-        name: name.trim(),
-        category,
-        frequency,
-        active: true,
-        reminder,
-      });
+      addRoutine({ name: name.trim(), category, frequency, active: true, reminder });
     }
-    setName('');
-    setCategory('matin');
-    setFrequency('quotidien');
-    setReminder(false);
+    setName(''); setCategory('matin'); setFrequency('quotidien'); setReminder(false);
     onClose();
   };
 
@@ -341,14 +360,14 @@ const RoutineFormModal = ({ open, onClose, routine }: { open: boolean; onClose: 
           >
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-foreground">{isEdit ? 'Modifier la routine' : 'Nouvelle routine'}</h2>
-              <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground">
+              <motion.button whileTap={{ scale: 0.9 }} onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground">
                 <X size={16} />
-              </button>
+              </motion.button>
             </div>
 
             {/* Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Nom *</label>
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Nom *</label>
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
@@ -360,23 +379,24 @@ const RoutineFormModal = ({ open, onClose, routine }: { open: boolean; onClose: 
 
             {/* Category */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Catégorie</label>
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Catégorie</label>
               <div className="grid grid-cols-3 gap-2">
                 {categories.map(cat => {
                   const cfg = categoryConfig[cat];
                   const CatIcon = cfg.icon;
                   const active = category === cat;
                   return (
-                    <button
+                    <motion.button
                       key={cat}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => setCategory(cat)}
-                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl transition-colors ${
-                        active ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted/50 text-muted-foreground'
+                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all ${
+                        active ? 'bg-primary/15 text-primary border border-primary/30 shadow-sm' : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       <CatIcon size={16} />
-                      <span className="text-[10px] font-medium">{cfg.label}</span>
-                    </button>
+                      <span className="text-[10px] font-semibold">{cfg.label}</span>
+                    </motion.button>
                   );
                 })}
               </div>
@@ -384,49 +404,51 @@ const RoutineFormModal = ({ open, onClose, routine }: { open: boolean; onClose: 
 
             {/* Frequency */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Fréquence</label>
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Fréquence</label>
               <div className="flex gap-2">
                 {(['quotidien', 'hebdomadaire'] as const).map(f => (
-                  <button
+                  <motion.button
                     key={f}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setFrequency(f)}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-medium transition-colors ${
-                      frequency === f ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted/50 text-muted-foreground'
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      frequency === f ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {f.charAt(0).toUpperCase() + f.slice(1)}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
 
             {/* Reminder */}
-            <div className="flex items-center justify-between">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setReminder(!reminder)}
+              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+                reminder ? 'bg-primary/10 border border-primary/30' : 'bg-muted/50 border border-border'
+              }`}
+            >
               <div>
                 <p className="text-sm text-foreground">Rappel discret</p>
                 <p className="text-[10px] text-muted-foreground">Notification de rappel</p>
               </div>
-              <button
-                onClick={() => setReminder(!reminder)}
-                className={`w-12 h-7 rounded-full transition-colors relative ${reminder ? 'bg-primary' : 'bg-muted'}`}
-              >
-                <motion.div
-                  className="w-5 h-5 rounded-full bg-foreground absolute top-1"
-                  animate={{ left: reminder ? 26 : 4 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                />
-              </button>
-            </div>
+              <div className={`text-xs font-bold ${reminder ? 'text-primary' : 'text-muted-foreground'}`}>
+                {reminder ? '🔔 ON' : 'OFF'}
+              </div>
+            </motion.button>
 
-            <button
+            {/* Submit */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className={`w-full py-3.5 rounded-xl text-sm font-semibold transition-colors ${
-                canSubmit ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground cursor-not-allowed'
+              className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all ${
+                canSubmit ? 'gradient-warm text-white shadow-lg' : 'bg-muted text-muted-foreground cursor-not-allowed'
               }`}
             >
               {isEdit ? 'Enregistrer' : 'Créer la routine'}
-            </button>
+            </motion.button>
           </motion.div>
         </>
       )}

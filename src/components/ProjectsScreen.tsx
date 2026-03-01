@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Play, Pause, Plus, ArrowLeft, Trash2, Edit3, CheckCircle2, Circle, Square, ChevronRight, Flame, CalendarIcon } from 'lucide-react';
+import { Clock, Play, Pause, Plus, ArrowLeft, Trash2, Edit3, CheckCircle2, Circle, Square, ChevronRight, Flame, CalendarIcon, FolderOpen, TrendingUp, Zap } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import type { Project, Task } from '@/types/app';
 import { format } from 'date-fns';
@@ -14,8 +14,8 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.08 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
 };
 
 const statusConfig = {
@@ -37,6 +37,9 @@ export const ProjectsScreen = () => {
   const [editProject, setEditProject] = useState<Project | null>(null);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const activeCount = projects.filter(p => p.status === 'en_cours').length;
+  const completedCount = projects.filter(p => p.status === 'terminé').length;
+  const totalHours = projects.reduce((a, p) => a + p.realTime, 0);
 
   if (selectedProject) {
     return <ProjectDetail project={selectedProject} onBack={() => setSelectedProjectId(null)} />;
@@ -47,15 +50,36 @@ export const ProjectsScreen = () => {
       <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
         <motion.div variants={item} className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Projets</h1>
-            <p className="text-sm text-muted-foreground mt-1">{projects.filter(p => p.status === 'en_cours').length} en cours · {projects.length} total</p>
+            <h1 className="text-3xl font-extrabold tracking-tight">Projets<span className="text-gradient">.</span></h1>
+            <p className="text-sm text-muted-foreground mt-1">{activeCount} en cours · {projects.length} total</p>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setShowCreateModal(true)}
-            className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary"
+            className="w-11 h-11 rounded-2xl gradient-primary flex items-center justify-center text-white shadow-lg glow-primary"
           >
             <Plus size={20} />
-          </button>
+          </motion.button>
+        </motion.div>
+
+        {/* Quick Stats */}
+        <motion.div variants={item} className="grid grid-cols-3 gap-3">
+          <div className="stat-card stat-card-blue text-center">
+            <FolderOpen size={18} className="mx-auto mb-2 text-primary" />
+            <p className="text-2xl font-black text-foreground">{activeCount}</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">En cours</p>
+          </div>
+          <div className="stat-card stat-card-green text-center">
+            <CheckCircle2 size={18} className="mx-auto mb-2 text-success" />
+            <p className="text-2xl font-black text-foreground">{completedCount}</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Terminés</p>
+          </div>
+          <div className="stat-card stat-card-amber text-center">
+            <Clock size={18} className="mx-auto mb-2 text-warning" />
+            <p className="text-2xl font-black text-foreground">{totalHours}h</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Temps total</p>
+          </div>
         </motion.div>
 
         {projects.map((project) => {
@@ -68,13 +92,17 @@ export const ProjectsScreen = () => {
 
           return (
             <motion.div key={project.id} variants={item}>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.01, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 onClick={() => setSelectedProjectId(project.id)}
-                className="glass-card-elevated p-5 space-y-4 w-full text-left"
+                className="glass-card-elevated p-5 space-y-4 w-full text-left relative overflow-hidden"
               >
-                <div className="flex items-start justify-between">
+                <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-5 gradient-primary blur-2xl" />
+                <div className="flex items-start justify-between relative z-10">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground">{project.name}</h3>
+                    <h3 className="font-bold text-foreground">{project.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1 truncate">{project.objective}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
@@ -88,12 +116,12 @@ export const ProjectsScreen = () => {
                 </div>
 
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock size={12} />
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={12} className="text-primary" />
                     <span className="font-mono">{project.realTime}h / {project.estimatedTime}h</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <CheckCircle2 size={12} />
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 size={12} className="text-success" />
                     <span className="font-mono">{completedTasks}/{totalTasks} tâches</span>
                   </div>
                 </div>
@@ -105,9 +133,9 @@ export const ProjectsScreen = () => {
                       <span>Temps</span>
                       <span className="font-mono">{Math.round(timeProgress)}%</span>
                     </div>
-                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <motion.div
-                        className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                        className="h-full gradient-cool rounded-full"
                         initial={{ width: 0 }}
                         animate={{ width: `${timeProgress}%` }}
                         transition={{ duration: 1, delay: 0.3 }}
@@ -119,9 +147,9 @@ export const ProjectsScreen = () => {
                       <span>Tâches</span>
                       <span className="font-mono">{Math.round(taskProgress)}%</span>
                     </div>
-                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <motion.div
-                        className="h-full bg-success rounded-full"
+                        className="h-full gradient-fresh rounded-full"
                         initial={{ width: 0 }}
                         animate={{ width: `${taskProgress}%` }}
                         transition={{ duration: 1, delay: 0.4 }}
@@ -130,33 +158,27 @@ export const ProjectsScreen = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs text-primary font-medium pt-1">
+                <div className="flex items-center gap-1 text-xs text-primary font-semibold pt-1">
                   <span>Détails</span>
                   <ChevronRight size={14} />
                 </div>
-              </button>
+              </motion.button>
             </motion.div>
           );
         })}
 
         {projects.length === 0 && (
-          <motion.div variants={item} className="glass-card p-8 text-center">
+          <motion.div variants={item} className="glass-card-bright p-10 text-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-5 gradient-primary" />
+            <FolderOpen size={40} className="mx-auto mb-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Aucun projet. Crée ton premier projet.</p>
           </motion.div>
         )}
       </motion.div>
 
-      <ProjectFormModal
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-      />
-
+      <ProjectFormModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
       {editProject && (
-        <ProjectFormModal
-          open={true}
-          onClose={() => setEditProject(null)}
-          project={editProject}
-        />
+        <ProjectFormModal open={true} onClose={() => setEditProject(null)} project={editProject} />
       )}
     </>
   );
@@ -187,55 +209,64 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
       >
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-foreground">
+          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={onBack} className="w-10 h-10 rounded-2xl glass-card-bright flex items-center justify-center text-foreground">
             <ArrowLeft size={18} />
-          </button>
+          </motion.button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold tracking-tight truncate">{project.name}</h1>
+            <h1 className="text-xl font-extrabold tracking-tight truncate">{project.name}</h1>
             <p className="text-xs text-muted-foreground">{project.objective}</p>
           </div>
-          <button onClick={() => setShowEditModal(true)} className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-foreground">
+          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowEditModal(true)} className="w-10 h-10 rounded-2xl glass-card-bright flex items-center justify-center text-foreground">
             <Edit3 size={16} />
-          </button>
+          </motion.button>
         </div>
 
         {/* Status & Priority */}
         <div className="flex gap-2">
           {(['en_cours', 'en_pause', 'terminé'] as const).map(st => (
-            <button
+            <motion.button
               key={st}
+              whileTap={{ scale: 0.95 }}
               onClick={() => handleStatusChange(st)}
-              className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${
+              className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 project.status === st
-                  ? `${statusConfig[st].bg} ${statusConfig[st].color} border border-current/20`
-                  : 'bg-muted/50 text-muted-foreground'
+                  ? `${statusConfig[st].bg} ${statusConfig[st].color} border border-current/20 shadow-sm`
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted'
               }`}
             >
               {statusConfig[st].label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
         {/* Time overview */}
-        <div className="glass-card-elevated p-5 space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass-card-elevated p-6 space-y-4 relative overflow-hidden"
+        >
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-10 gradient-cool blur-3xl" />
           <div className="flex items-center gap-2 mb-1">
-            <Clock size={14} className="text-primary" />
-            <span className="text-sm font-semibold text-foreground/80">Temps global</span>
+            <div className="w-7 h-7 rounded-lg gradient-cool flex items-center justify-center">
+              <Clock size={14} className="text-white" />
+            </div>
+            <span className="text-sm font-bold text-foreground/80">Temps global</span>
           </div>
           <div className="flex gap-6">
             <div className="flex-1">
-              <p className="text-2xl font-bold font-mono text-foreground">{project.realTime}h</p>
+              <p className="text-3xl font-black font-mono text-foreground">{project.realTime}<span className="text-primary">h</span></p>
               <p className="text-[10px] text-muted-foreground">Réel</p>
             </div>
             <div className="w-px bg-border" />
             <div className="flex-1">
-              <p className="text-2xl font-bold font-mono text-muted-foreground">{project.estimatedTime}h</p>
+              <p className="text-3xl font-black font-mono text-muted-foreground">{project.estimatedTime}h</p>
               <p className="text-[10px] text-muted-foreground">Estimé</p>
             </div>
           </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
             <motion.div
-              className={`h-full rounded-full ${project.realTime > project.estimatedTime ? 'bg-destructive' : 'bg-gradient-to-r from-primary to-accent'}`}
+              className={`h-full rounded-full ${project.realTime > project.estimatedTime ? 'bg-destructive' : 'gradient-cool'}`}
               initial={{ width: 0 }}
               animate={{ width: `${Math.min((project.realTime / project.estimatedTime) * 100, 100)}%` }}
               transition={{ duration: 1 }}
@@ -244,23 +275,26 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
           {project.realTime > project.estimatedTime && (
             <p className="text-[10px] text-destructive font-semibold">⚠ Dépassement de {project.realTime - project.estimatedTime}h</p>
           )}
-        </div>
+        </motion.div>
 
         {/* Dates */}
-        <div className="glass-card p-4 flex gap-4">
+        <div className="glass-card-bright p-4 flex gap-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CalendarIcon size={12} />
+            <CalendarIcon size={12} className="text-primary" />
             <span>Début : <span className="text-foreground font-mono">{project.startDate}</span></span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CalendarIcon size={12} />
+            <CalendarIcon size={12} className="text-accent" />
             <span>Fin : <span className="text-foreground font-mono">{project.endDate}</span></span>
           </div>
         </div>
 
         {/* Task time comparison */}
-        <div className="glass-card p-4 space-y-2">
-          <span className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Comparaison temps tâches</span>
+        <div className="glass-card-bright p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={12} className="text-primary" />
+            <span className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Comparaison temps tâches</span>
+          </div>
           <div className="flex gap-4 text-xs">
             <div>
               <span className="text-muted-foreground">Estimé : </span>
@@ -281,17 +315,22 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
 
         {/* Tasks section */}
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground/80">Tâches du projet</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg gradient-primary flex items-center justify-center">
+              <CheckCircle2 size={12} className="text-white" />
+            </div>
+            <h2 className="text-sm font-bold text-foreground/80">Tâches du projet</h2>
             <span className="text-xs text-muted-foreground font-mono">{completedTasks}/{project.tasks.length}</span>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowTaskModal(true)}
-            className="flex items-center gap-1 text-xs text-primary font-medium bg-primary/10 px-3 py-1.5 rounded-lg"
+            className="flex items-center gap-1 text-xs text-primary font-semibold bg-primary/10 px-3 py-1.5 rounded-xl"
           >
             <Plus size={14} />
             Ajouter
-          </button>
+          </motion.button>
         </div>
 
         <div className="space-y-3">
@@ -305,7 +344,7 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
             />
           ))}
           {project.tasks.length === 0 && (
-            <div className="glass-card p-6 text-center">
+            <div className="glass-card-bright p-8 text-center">
               <p className="text-xs text-muted-foreground">Aucune tâche. Ajoute ta première tâche.</p>
             </div>
           )}
@@ -313,27 +352,19 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
 
         {/* Danger zone */}
         <div className="pt-4">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={() => { deleteProject(project.id); onBack(); }}
-            className="w-full py-3 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors"
           >
             <Trash2 size={14} />
             Supprimer ce projet
-          </button>
+          </motion.button>
         </div>
       </motion.div>
 
-      <ProjectFormModal
-        open={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        project={project}
-      />
-
-      <ProjectTaskFormModal
-        open={showTaskModal}
-        onClose={() => setShowTaskModal(false)}
-        projectId={project.id}
-      />
+      <ProjectFormModal open={showEditModal} onClose={() => setShowEditModal(false)} project={project} />
+      <ProjectTaskFormModal open={showTaskModal} onClose={() => setShowTaskModal(false)} projectId={project.id} />
     </>
   );
 };
@@ -347,23 +378,29 @@ const ProjectTaskCard = ({
   const { toggleProjectTask, deleteProjectTask } = useAppStore();
 
   return (
-    <div className="glass-card-elevated p-4 space-y-3">
+    <motion.div
+      whileHover={{ scale: 1.01 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className="glass-card-elevated p-4 space-y-3"
+    >
       <div className="flex items-center gap-3">
-        <button onClick={() => toggleProjectTask(projectId, task.id)}>
+        <motion.button whileTap={{ scale: 0.8 }} onClick={() => toggleProjectTask(projectId, task.id)}>
           {task.completed ? (
-            <CheckCircle2 size={18} className="text-success" />
+            <div className="w-6 h-6 rounded-full gradient-fresh flex items-center justify-center">
+              <CheckCircle2 size={14} className="text-white" />
+            </div>
           ) : (
-            <Circle size={18} className="text-muted-foreground" />
+            <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 hover:border-primary/60 transition-colors" />
           )}
-        </button>
+        </motion.button>
         <button onClick={onToggleExpand} className="flex-1 min-w-0 text-left">
-          <p className={`text-sm font-medium ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+          <p className={`text-sm font-semibold ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
             {task.name}
           </p>
           <div className="flex gap-2 mt-1">
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{task.category}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">{task.day}</span>
-            {task.strict && <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/15 text-warning font-semibold">STRICT</span>}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{task.category}</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-mono">{task.day}</span>
+            {task.strict && <span className="text-[10px] px-2 py-0.5 rounded-full bg-warning/15 text-warning font-bold">STRICT</span>}
           </div>
         </button>
         <div className="text-right shrink-0">
@@ -382,18 +419,16 @@ const ProjectTaskCard = ({
             exit={{ opacity: 0, height: 0 }}
             className="space-y-3 overflow-hidden"
           >
-            {/* Chrono */}
             {!task.completed && (
               <ProjectTaskChrono task={task} projectId={projectId} />
             )}
 
-            {/* Session history */}
             {task.sessions.length > 0 && (
               <div className="pt-2 border-t border-border/50 space-y-2">
-                <span className="text-[10px] font-semibold text-foreground/60 uppercase tracking-wider">Historique des sessions</span>
+                <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-wider">Historique des sessions</span>
                 {task.sessions.map((session, i) => (
                   <div key={session.id} className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                    <div className="w-5 h-5 rounded bg-muted flex items-center justify-center font-mono text-foreground/60">{i + 1}</div>
+                    <div className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center font-mono text-primary text-[8px] font-bold">{i + 1}</div>
                     <span className="font-mono">
                       {session.startTime ? format(new Date(session.startTime), 'dd/MM HH:mm', { locale: fr }) : '—'}
                     </span>
@@ -401,41 +436,23 @@ const ProjectTaskCard = ({
                     <span className="font-mono">
                       {session.endTime ? format(new Date(session.endTime), 'HH:mm', { locale: fr }) : '—'}
                     </span>
-                    <span className="ml-auto font-mono text-foreground">{session.duration} min</span>
+                    <span className="ml-auto font-mono text-foreground font-semibold">{session.duration} min</span>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Time comparison bar */}
-            <div className="pt-2 border-t border-border/50">
-              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                <span>Estimé vs Réel</span>
-                <span className="font-mono">{task.realDuration}/{task.duration} min</span>
-              </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden relative">
-                {/* Estimated marker */}
-                <div className="absolute top-0 bottom-0 w-px bg-foreground/30" style={{ left: '100%' }} />
-                <motion.div
-                  className={`h-full rounded-full ${task.realDuration > task.duration ? 'bg-destructive' : 'bg-primary'}`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${task.duration > 0 ? Math.min((task.realDuration / task.duration) * 100, 100) : 0}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-            </div>
-
-            {/* Delete */}
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={() => deleteProjectTask(projectId, task.id)}
-              className="flex items-center gap-1 text-[10px] text-destructive font-medium pt-1"
+              className="flex items-center gap-1 text-[10px] text-destructive/60 font-medium pt-1 hover:text-destructive transition-colors"
             >
-              <Trash2 size={12} />
-              Supprimer cette tâche
-            </button>
+              <Trash2 size={10} />
+              Supprimer
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
