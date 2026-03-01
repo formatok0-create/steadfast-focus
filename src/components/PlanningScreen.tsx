@@ -30,7 +30,7 @@ const typeStyles: Record<string, { bg: string; border: string; text: string; glo
   formation: { bg: 'bg-success/12', border: 'border-success/25', text: 'text-success', glow: 'shadow-success/5' },
 };
 
-const hours = Array.from({ length: 17 }, (_, i) => i + 6); // 6h to 22h
+const hours = Array.from({ length: 24 }, (_, i) => i); // 0h to 23h
 
 export const PlanningScreen = () => {
   const { tasks, routines, formations } = useAppStore();
@@ -259,7 +259,7 @@ export const PlanningScreen = () => {
             <div key={hour} className="flex gap-3 min-h-[52px]">
               {/* Time label */}
               <div className="w-11 shrink-0 text-right pt-1">
-                <span className={`text-[11px] font-mono font-medium ${hasContent ? 'text-foreground/60' : 'text-muted-foreground/40'}`}>
+                <span className={`text-xs font-mono font-bold ${hasContent ? 'text-foreground' : 'text-muted-foreground/60'}`}>
                   {hour.toString().padStart(2, '0')}:00
                 </span>
               </div>
