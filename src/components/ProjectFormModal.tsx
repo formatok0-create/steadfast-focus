@@ -24,6 +24,8 @@ export const ProjectFormModal = ({ open, onClose, project }: ProjectFormModalPro
   const [priority, setPriority] = useState<Project['priority']>(project?.priority ?? 'moyenne');
   const [startDate, setStartDate] = useState<Date | undefined>(project ? new Date(project.startDate) : new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(project ? new Date(project.endDate) : undefined);
+  const [dailyStartTime, setDailyStartTime] = useState(project?.dailyStartTime ?? '');
+  const [dailyEndTime, setDailyEndTime] = useState(project?.dailyEndTime ?? '');
   const [estimatedTime, setEstimatedTime] = useState(project?.estimatedTime?.toString() ?? '');
   const [status, setStatus] = useState<Project['status']>(project?.status ?? 'en_cours');
 
@@ -37,6 +39,8 @@ export const ProjectFormModal = ({ open, onClose, project }: ProjectFormModalPro
       priority,
       startDate: format(startDate!, 'yyyy-MM-dd'),
       endDate: format(endDate!, 'yyyy-MM-dd'),
+      dailyStartTime: dailyStartTime || undefined,
+      dailyEndTime: dailyEndTime || undefined,
       estimatedTime: parseInt(estimatedTime),
       status,
     };
@@ -153,6 +157,29 @@ export const ProjectFormModal = ({ open, onClose, project }: ProjectFormModalPro
                 </Popover>
               </div>
             </div>
+
+            {/* Daily work hours */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Heure début</label>
+                <input
+                  type="time"
+                  value={dailyStartTime}
+                  onChange={e => setDailyStartTime(e.target.value)}
+                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Heure fin</label>
+                <input
+                  type="time"
+                  value={dailyEndTime}
+                  onChange={e => setDailyEndTime(e.target.value)}
+                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                />
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground -mt-3">Optionnel — créneau de travail quotidien dédié au projet</p>
 
             {/* Estimated time */}
             <div className="space-y-1.5">
