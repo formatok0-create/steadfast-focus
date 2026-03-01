@@ -500,8 +500,26 @@ const TaskFormModal = ({ open, onClose, defaultDay, task }: { open: boolean; onC
   }, [task, open, defaultDay]);
 
   const dayStr = day ? format(day, 'yyyy-MM-dd') : '';
-  const dayTaskCount = tasks.filter(t => t.day === dayStr && (!isEdit || t.id !== task?.id)).length;
+  const dayTasks = tasks.filter(t => t.day === dayStr && (!isEdit || t.id !== task?.id));
+  const dayTaskCount = dayTasks.length;
   const atLimit = dayTaskCount >= settings.maxTasksPerDay;
+
+  // Conflict detection
+  const conflictingTasks = startTime && endTime && duration > 0
+    ? dayTasks.filter(t => {
+        if (!t.startTime || !t.endTime) return false;
+        const [tsh, tsm] = t.startTime.split(':').map(Number);
+        const [teh, tem] = t.endTime.split(':').map(Number);
+        const [sh, sm] = startTime.split(':').map(Number);
+        const [eh, em] = endTime.split(':').map(Number);
+        const tStart = tsh * 60 + tsm;
+        const tEnd = teh * 60 + tem;
+        const myStart = sh * 60 + sm;
+        const myEnd = eh * 60 + em;
+        return myStart < tEnd && myEnd > tStart;
+      })
+    : [];
+  const hasConflict = conflictingTasks.length > 0;
 
   const canSubmit = name.trim().length > 0 && startTime.length > 0 && endTime.length > 0 && duration > 0 && (!atLimit || isEdit);
 
@@ -614,6 +632,17 @@ const TaskFormModal = ({ open, onClose, defaultDay, task }: { open: boolean; onC
             )}
             {startTime && endTime && duration <= 0 && (
               <p className="text-[10px] text-destructive font-bold">L'heure de fin doit être après l'heure de début</p>
+            )}
+            {hasConflict && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/10 border border-warning/20">
+                <AlertTriangle size={14} className="text-warning shrink-0" />
+                <div>
+                  <p className="text-xs text-warning font-bold">Conflit horaire détecté</p>
+                  <p className="text-[10px] text-warning/80">
+                    Chevauche : {conflictingTasks.map(t => `${t.name} (${t.startTime}–${t.endTime})`).join(', ')}
+                  </p>
+                </div>
+              </div>
             )}
 
             {/* Category */}
