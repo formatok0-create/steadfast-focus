@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,57 +6,61 @@
 
 @layer base {
   :root {
-    --background: 222 47% 8%;
-    --foreground: 40 20% 92%;
+    --background: 230 25% 7%;
+    --foreground: 0 0% 96%;
 
-    --card: 222 40% 12%;
-    --card-foreground: 40 20% 92%;
+    --card: 230 20% 11%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 222 40% 12%;
-    --popover-foreground: 40 20% 92%;
+    --popover: 230 20% 11%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 200 80% 55%;
-    --primary-foreground: 222 47% 8%;
+    --primary: 220 90% 56%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 30% 18%;
-    --secondary-foreground: 40 20% 85%;
+    --secondary: 230 15% 16%;
+    --secondary-foreground: 0 0% 85%;
 
-    --muted: 222 25% 16%;
-    --muted-foreground: 220 15% 55%;
+    --muted: 230 15% 14%;
+    --muted-foreground: 230 10% 48%;
 
-    --accent: 35 40% 50%;
-    --accent-foreground: 40 20% 95%;
+    --accent: 270 75% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 65% 50%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 222 25% 20%;
-    --input: 222 25% 20%;
-    --ring: 200 80% 55%;
+    --border: 230 15% 18%;
+    --input: 230 15% 18%;
+    --ring: 220 90% 56%;
 
     --radius: 1rem;
 
-    --glass: 222 40% 14%;
-    --glass-border: 222 25% 22%;
-    --glass-highlight: 200 80% 55%;
+    --glass: 230 20% 13%;
+    --glass-border: 230 15% 22%;
+    --glass-highlight: 220 90% 56%;
 
-    --success: 160 60% 45%;
-    --success-foreground: 160 60% 95%;
-    --warning: 35 90% 55%;
-    --warning-foreground: 35 90% 10%;
+    --success: 152 70% 48%;
+    --success-foreground: 152 70% 95%;
+    --warning: 38 95% 60%;
+    --warning-foreground: 38 95% 10%;
+    --info: 200 85% 55%;
+    --info-foreground: 200 85% 95%;
 
-    --sand: 35 25% 70%;
-    --ivory: 40 30% 90%;
-    --brown: 25 30% 35%;
+    --cyan: 185 80% 55%;
+    --emerald: 155 75% 50%;
+    --violet: 270 75% 60%;
+    --rose: 345 75% 60%;
+    --amber: 38 95% 60%;
 
-    --sidebar-background: 222 40% 10%;
-    --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 200 80% 55%;
-    --sidebar-primary-foreground: 222 47% 8%;
-    --sidebar-accent: 222 30% 18%;
-    --sidebar-accent-foreground: 40 20% 85%;
-    --sidebar-border: 222 25% 20%;
-    --sidebar-ring: 200 80% 55%;
+    --sidebar-background: 230 20% 9%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 220 90% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 230 15% 16%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 230 15% 18%;
+    --sidebar-ring: 220 90% 56%;
   }
 }
 
@@ -65,34 +69,116 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl rounded-2xl;
-    border: 1px solid hsl(var(--glass-border) / 0.3);
-    box-shadow: 
-      0 8px 32px -8px hsl(222 47% 4% / 0.5),
-      inset 0 1px 0 0 hsl(var(--glass-border) / 0.15);
+    @apply rounded-2xl;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--card) / 0.7) 0%,
+      hsl(var(--card) / 0.4) 100%
+    );
+    backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid hsl(var(--glass-border) / 0.25);
+    box-shadow:
+      0 8px 32px -8px hsl(230 25% 3% / 0.5),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
   }
+
   .glass-card-elevated {
-    @apply glass-card;
-    box-shadow: 
-      0 16px 48px -12px hsl(222 47% 4% / 0.6),
-      inset 0 1px 0 0 hsl(var(--glass-border) / 0.2);
+    @apply rounded-2xl;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card) / 0.85) 0%,
+      hsl(var(--card) / 0.5) 100%
+    );
+    backdrop-filter: blur(32px) saturate(1.6);
+    border: 1px solid hsl(var(--glass-border) / 0.3);
+    box-shadow:
+      0 20px 60px -15px hsl(230 25% 3% / 0.65),
+      0 0 0 1px hsl(0 0% 100% / 0.03),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
   }
+
+  .glass-card-bright {
+    @apply rounded-2xl;
+    background: linear-gradient(
+      145deg,
+      hsl(0 0% 100% / 0.08) 0%,
+      hsl(0 0% 100% / 0.03) 100%
+    );
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow:
+      0 8px 32px -8px hsl(230 25% 3% / 0.4),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+  }
+
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
   }
+
+  .text-gradient-warm {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--warning)), hsl(var(--rose)));
+  }
+
   .glow-primary {
-    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.4);
+    box-shadow: 0 0 24px -4px hsl(var(--primary) / 0.35);
   }
+
+  .glow-accent {
+    box-shadow: 0 0 24px -4px hsl(var(--accent) / 0.35);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 24px -4px hsl(var(--success) / 0.3);
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  .gradient-warm {
+    background: linear-gradient(135deg, hsl(var(--warning)), hsl(var(--rose)));
+  }
+
+  .gradient-cool {
+    background: linear-gradient(135deg, hsl(var(--cyan)), hsl(var(--primary)));
+  }
+
+  .gradient-fresh {
+    background: linear-gradient(135deg, hsl(var(--emerald)), hsl(var(--cyan)));
+  }
+
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 16px);
   }
+
+  .stat-card {
+    @apply glass-card-bright p-4 relative overflow-hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 999px;
+  }
+
+  .stat-card-blue::before { background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--cyan))); }
+  .stat-card-violet::before { background: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--rose))); }
+  .stat-card-green::before { background: linear-gradient(90deg, hsl(var(--emerald)), hsl(var(--cyan))); }
+  .stat-card-amber::before { background: linear-gradient(90deg, hsl(var(--warning)), hsl(var(--rose))); }
 }

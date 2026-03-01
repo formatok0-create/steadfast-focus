@@ -1,25 +1,24 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, Clock, Flame, Quote, Target, BookOpen, Zap, AlertTriangle, Trophy } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Flame, Quote, Target, BookOpen, Zap, AlertTriangle, Trophy, TrendingUp, ArrowRight } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.07 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.45 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
 };
 
 export const DashboardScreen = () => {
   const { tasks, routines, projects, formations, skills, quote, setTaskStatus, toggleRoutine } = useAppStore();
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todayLabel = format(new Date(), "d MMMM yyyy", { locale: fr });
+  const todayLabel = format(new Date(), "EEEE d MMMM", { locale: fr });
 
-  // Today's tasks (daily + project tasks for today)
   const todayTasks = tasks.filter(t => t.day === today);
   const todayProjectTasks = projects.flatMap(p => p.tasks.filter(t => t.day === today));
   const allTodayTasks = [...todayTasks, ...todayProjectTasks];
@@ -28,167 +27,173 @@ export const DashboardScreen = () => {
   const totalEstimated = allTodayTasks.reduce((a, t) => a + t.duration, 0);
   const totalReal = allTodayTasks.reduce((a, t) => a + t.realDuration, 0);
 
-  // Active routines only
   const activeRoutines = routines.filter(r => r.active);
   const completedRoutines = activeRoutines.filter(r => r.completed).length;
 
-  // Honorable day logic
   const taskRate = allTodayTasks.length > 0 ? completedTasks / allTodayTasks.length : 0;
   const routineRate = activeRoutines.length > 0 ? completedRoutines / activeRoutines.length : 0;
   const isHonorable = taskRate >= 0.7 && routineRate >= 0.6;
-  const isIncomplete = !isHonorable && (completedTasks > 0 || completedRoutines > 0);
 
-  // Quick stats
   const activeProjects = projects.filter(p => p.status === 'en_cours').length;
   const activeFormations = formations.filter(f => f.status === 'en_cours').length;
   const activeSkills = skills.filter(s => s.active).length;
 
-  // Time diff
-  const timeDiff = totalReal - totalEstimated;
-  const timeDiffLabel = timeDiff > 0 ? `+${timeDiff}m` : timeDiff < 0 ? `${timeDiff}m` : '0m';
+  const timeProgress = totalEstimated > 0 ? Math.min((totalReal / totalEstimated) * 100, 100) : 0;
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
       {/* Header */}
       <motion.div variants={item} className="flex items-center justify-between">
         <div>
-          <p className="text-muted-foreground text-sm capitalize">{todayLabel}</p>
-          <h1 className="text-2xl font-bold tracking-tight">Bonjour.</h1>
+          <p className="text-muted-foreground text-xs uppercase tracking-widest font-medium capitalize">{todayLabel}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight mt-1">
+            Bonjour<span className="text-gradient">.</span>
+          </h1>
         </div>
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, type: 'spring' }}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${
+          transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
+          className={`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 ${
             isHonorable
-              ? 'bg-success/15 text-success'
-              : isIncomplete
-                ? 'bg-warning/15 text-warning'
-                : 'bg-muted text-muted-foreground'
+              ? 'gradient-fresh text-white glow-success'
+              : 'glass-card-bright text-warning'
           }`}
         >
           {isHonorable ? (
-            <><Trophy size={12} /> Journée honorable</>
-          ) : isIncomplete ? (
-            <><AlertTriangle size={12} /> Incomplète</>
+            <><Trophy size={14} /> Honorable</>
           ) : (
-            <>⏳ En attente</>
+            <><AlertTriangle size={14} /> Incomplète</>
           )}
         </motion.div>
       </motion.div>
 
       {/* Quote */}
-      <motion.div variants={item} className="glass-card p-4">
-        <div className="flex gap-3 items-start">
-          <Quote size={16} className="text-accent mt-0.5 shrink-0" />
-          <p className="text-sm text-sand italic leading-relaxed">{quote}</p>
+      <motion.div variants={item} className="glass-card-bright p-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1 h-full gradient-primary rounded-full" />
+        <div className="flex gap-3 items-start pl-3">
+          <Quote size={14} className="text-accent mt-0.5 shrink-0 opacity-60" />
+          <p className="text-sm text-foreground/70 italic leading-relaxed font-light">{quote}</p>
         </div>
       </motion.div>
 
-      {/* Quick Overview Cards */}
-      <motion.div variants={item} className="grid grid-cols-3 gap-3">
-        <div className="glass-card p-3 text-center">
-          <Target size={14} className="mx-auto mb-1 text-primary" />
-          <p className="text-lg font-bold text-foreground">{activeProjects}</p>
-          <p className="text-[10px] text-muted-foreground">Projets actifs</p>
-        </div>
-        <div className="glass-card p-3 text-center">
-          <BookOpen size={14} className="mx-auto mb-1 text-accent" />
-          <p className="text-lg font-bold text-foreground">{activeFormations}</p>
-          <p className="text-[10px] text-muted-foreground">Formations</p>
-        </div>
-        <div className="glass-card p-3 text-center">
-          <Zap size={14} className="mx-auto mb-1 text-warning" />
-          <p className="text-lg font-bold text-foreground">{activeSkills}</p>
-          <p className="text-[10px] text-muted-foreground">Compétences</p>
-        </div>
-      </motion.div>
-
-      {/* Time Overview */}
-      <motion.div variants={item} className="glass-card-elevated p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Clock size={16} className="text-primary" />
-          <h2 className="text-sm font-semibold text-foreground/80">Temps — Aujourd'hui</h2>
-        </div>
-        <div className="flex gap-6">
-          <div className="flex-1">
-            <p className="text-3xl font-bold font-mono text-foreground">
-              {Math.floor(totalReal / 60)}h{(totalReal % 60).toString().padStart(2, '0')}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Réel</p>
+      {/* Time Overview - Hero Card */}
+      <motion.div variants={item} className="glass-card-elevated p-6 relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-10 gradient-primary blur-3xl" />
+        <div className="flex items-center gap-2 mb-5">
+          <div className="w-8 h-8 rounded-xl gradient-cool flex items-center justify-center">
+            <Clock size={16} className="text-white" />
           </div>
-          <div className="w-px bg-border" />
+          <h2 className="text-sm font-bold text-foreground/80 uppercase tracking-wider">Temps aujourd'hui</h2>
+        </div>
+        <div className="flex gap-4 items-end">
           <div className="flex-1">
-            <p className="text-3xl font-bold font-mono text-muted-foreground">
+            <p className="text-4xl font-black font-mono text-foreground tracking-tight">
+              {Math.floor(totalReal / 60)}<span className="text-primary">h</span>{(totalReal % 60).toString().padStart(2, '0')}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Temps réel</p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-bold font-mono text-muted-foreground">
               {Math.floor(totalEstimated / 60)}h{(totalEstimated % 60).toString().padStart(2, '0')}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Prévu</p>
-          </div>
-          <div className="w-px bg-border" />
-          <div className="flex-1">
-            <p className={`text-3xl font-bold font-mono ${timeDiff > 0 ? 'text-destructive' : timeDiff < 0 ? 'text-success' : 'text-muted-foreground'}`}>
-              {timeDiffLabel}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Écart</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Prévu</p>
           </div>
         </div>
-        <div className="mt-4 h-1.5 bg-muted rounded-full overflow-hidden">
+        <div className="mt-5 h-2 bg-muted/60 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+            className="h-full rounded-full gradient-cool"
             initial={{ width: 0 }}
-            animate={{ width: `${totalEstimated > 0 ? Math.min((totalReal / totalEstimated) * 100, 100) : 0}%` }}
-            transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+            animate={{ width: `${timeProgress}%` }}
+            transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
           />
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-2 font-mono text-right">{Math.round(timeProgress)}% consommé</p>
+      </motion.div>
+
+      {/* Quick Stats */}
+      <motion.div variants={item} className="grid grid-cols-3 gap-3">
+        <div className="stat-card stat-card-blue text-center">
+          <Target size={18} className="mx-auto mb-2 text-primary" />
+          <p className="text-2xl font-black text-foreground">{activeProjects}</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Projets</p>
+        </div>
+        <div className="stat-card stat-card-violet text-center">
+          <BookOpen size={18} className="mx-auto mb-2 text-accent" />
+          <p className="text-2xl font-black text-foreground">{activeFormations}</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Formations</p>
+        </div>
+        <div className="stat-card stat-card-amber text-center">
+          <Zap size={18} className="mx-auto mb-2 text-warning" />
+          <p className="text-2xl font-black text-foreground">{activeSkills}</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Compétences</p>
         </div>
       </motion.div>
 
       {/* Tasks */}
       <motion.div variants={item}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground/80">Tâches du jour</h2>
-          <span className="text-xs text-muted-foreground font-mono">{completedTasks}/{allTodayTasks.length}</span>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg gradient-primary flex items-center justify-center">
+              <CheckCircle2 size={12} className="text-white" />
+            </div>
+            <h2 className="text-sm font-bold text-foreground/80">Tâches du jour</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-primary font-bold">{completedTasks}</span>
+            <span className="text-xs text-muted-foreground">/ {allTodayTasks.length}</span>
+          </div>
         </div>
         {allTodayTasks.length === 0 ? (
-          <div className="glass-card p-4 text-center text-sm text-muted-foreground">
-            Aucune tâche prévue aujourd'hui
+          <div className="glass-card-bright p-6 text-center">
+            <p className="text-sm text-muted-foreground">Aucune tâche prévue</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {allTodayTasks.map((task) => (
+            {allTodayTasks.map((task, i) => (
               <motion.button
                 key={task.id}
-                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * i, duration: 0.4 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => {
                   if (!task.projectId) {
                     setTaskStatus(task.id, task.completed ? undefined as any : 'terminée');
                   }
                 }}
-                className="glass-card p-3.5 w-full flex items-center gap-3 text-left"
+                className="glass-card-bright p-4 w-full flex items-center gap-3 text-left group"
               >
                 {task.completed ? (
-                  <CheckCircle2 size={18} className="text-success shrink-0" />
+                  <div className="w-6 h-6 rounded-full gradient-fresh flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={14} className="text-white" />
+                  </div>
                 ) : task.status === 'évitée' ? (
-                  <Circle size={18} className="text-destructive shrink-0" />
+                  <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
+                    <Circle size={14} className="text-destructive" />
+                  </div>
                 ) : (
-                  <Circle size={18} className="text-muted-foreground shrink-0" />
+                  <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 group-hover:border-primary/60 transition-colors shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  <p className={`text-sm font-semibold truncate ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                     {task.name}
                   </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-xs text-muted-foreground">{task.category}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{task.category}</span>
                     {task.projectId && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Projet</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">Projet</span>
                     )}
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-xs font-mono text-muted-foreground">{task.duration}m</p>
+                <div className="text-right shrink-0 space-y-0.5">
+                  <p className="text-xs font-mono font-bold text-foreground/60">{task.duration}m</p>
                   {task.realDuration > 0 && (
-                    <p className="text-[10px] font-mono text-primary">{task.realDuration}m réel</p>
+                    <p className="text-[10px] font-mono text-primary">{task.realDuration}m</p>
                   )}
-                  {task.strict && <span className="text-[9px] text-warning font-semibold">STRICT</span>}
+                  {task.strict && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-warning/15 text-warning font-bold">STRICT</span>
+                  )}
                 </div>
               </motion.button>
             ))}
@@ -199,54 +204,71 @@ export const DashboardScreen = () => {
       {/* Routines */}
       <motion.div variants={item}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground/80">Routines</h2>
-          <span className="text-xs text-muted-foreground font-mono">{completedRoutines}/{activeRoutines.length}</span>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg gradient-warm flex items-center justify-center">
+              <Flame size={12} className="text-white" />
+            </div>
+            <h2 className="text-sm font-bold text-foreground/80">Routines</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-warning font-bold">{completedRoutines}</span>
+            <span className="text-xs text-muted-foreground">/ {activeRoutines.length}</span>
+          </div>
         </div>
-        {/* Progress ring for routines */}
-        <div className="mb-3 h-1.5 bg-muted rounded-full overflow-hidden">
+        {/* Routine progress */}
+        <div className="mb-3 h-1.5 bg-muted/60 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-accent to-success rounded-full"
+            className="h-full rounded-full gradient-warm"
             initial={{ width: 0 }}
-            animate={{ width: `${activeRoutines.length > 0 ? (completedRoutines / activeRoutines.length) * 100 : 0}%` }}
+            animate={{ width: `${routineRate * 100}%` }}
             transition={{ duration: 0.8, delay: 0.6 }}
           />
         </div>
         <div className="space-y-2">
-          {activeRoutines.map((routine) => (
+          {activeRoutines.map((routine, i) => (
             <motion.button
               key={routine.id}
-              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.08 * i, duration: 0.4 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => toggleRoutine(routine.id)}
-              className="glass-card p-3.5 w-full flex items-center gap-3 text-left"
+              className="glass-card-bright p-4 w-full flex items-center gap-3 text-left group"
             >
               {routine.completed ? (
-                <CheckCircle2 size={18} className="text-success shrink-0" />
+                <div className="w-6 h-6 rounded-full gradient-fresh flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={14} className="text-white" />
+                </div>
               ) : (
-                <Circle size={18} className="text-muted-foreground shrink-0" />
+                <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 group-hover:border-warning/60 transition-colors shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${routine.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                <p className={`text-sm font-semibold ${routine.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                   {routine.name}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{routine.category}</p>
               </div>
-              <div className="flex items-center gap-1 text-xs text-accent">
-                <Flame size={12} />
-                <span className="font-mono">{routine.streak}j</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber/10">
+                <Flame size={12} className="text-amber" />
+                <span className="text-xs font-mono font-bold text-amber">{routine.streak}j</span>
               </div>
             </motion.button>
           ))}
         </div>
       </motion.div>
 
-      {/* Day summary footer */}
-      <motion.div variants={item} className="glass-card p-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Tâches: {Math.round(taskRate * 100)}%</span>
-          <span>Routines: {Math.round(routineRate * 100)}%</span>
-          <span className={isHonorable ? 'text-success font-semibold' : 'text-warning font-semibold'}>
-            {isHonorable ? '✅ Honorable' : '⚠️ Incomplète'}
-          </span>
+      {/* Day summary */}
+      <motion.div variants={item} className="glass-card-elevated p-4 relative overflow-hidden">
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full opacity-10 gradient-warm blur-3xl" />
+        <div className="flex items-center justify-between text-xs relative z-10">
+          <div className="flex items-center gap-2">
+            <TrendingUp size={14} className="text-primary" />
+            <span className="font-semibold text-foreground/80">Bilan</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="font-mono">Tâches <span className="font-bold text-primary">{Math.round(taskRate * 100)}%</span></span>
+            <span className="font-mono">Routines <span className="font-bold text-warning">{Math.round(routineRate * 100)}%</span></span>
+          </div>
         </div>
       </motion.div>
     </motion.div>
