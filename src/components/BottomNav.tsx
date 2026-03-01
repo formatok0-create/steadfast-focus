@@ -1,47 +1,110 @@
-import { motion } from 'framer-motion';
-import { LayoutDashboard, FolderKanban, CheckSquare, Target, Calendar } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutDashboard, CheckSquare, Calendar, MoreHorizontal, X, FolderKanban, Target, BookOpen, BarChart3, Settings, Flame, Crosshair } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
+import { useState } from 'react';
 
-const tabs = [
+const mainTabs = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Accueil' },
-  { id: 'projects', icon: FolderKanban, label: 'Projets' },
   { id: 'tasks', icon: CheckSquare, label: 'Tâches' },
-  { id: 'skills', icon: Target, label: 'Skills' },
   { id: 'planning', icon: Calendar, label: 'Planning' },
+  { id: 'routines', icon: Flame, label: 'Routines' },
+  { id: 'more', icon: MoreHorizontal, label: 'Plus' },
+];
+
+const moreItems = [
+  { id: 'projects', icon: FolderKanban, label: 'Projets' },
+  { id: 'skills', icon: Target, label: 'Compétences' },
+  { id: 'formations', icon: BookOpen, label: 'Formations' },
+  { id: 'objectives', icon: Crosshair, label: 'Objectifs' },
+  { id: 'stats', icon: BarChart3, label: 'Statistiques' },
+  { id: 'settings', icon: Settings, label: 'Paramètres' },
 ];
 
 export const BottomNav = () => {
   const { activeTab, setActiveTab } = useAppStore();
+  const [showMore, setShowMore] = useState(false);
+
+  const handleTab = (id: string) => {
+    if (id === 'more') {
+      setShowMore(prev => !prev);
+    } else {
+      setActiveTab(id);
+      setShowMore(false);
+    }
+  };
+
+  const isMoreActive = moreItems.some(m => m.id === activeTab);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
-      <div className="mx-3 mb-2 glass-card-elevated px-2 py-2 flex items-center justify-around">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors duration-300"
+    <>
+      {/* More menu overlay */}
+      <AnimatePresence>
+        {showMore && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMore(false)}
+              className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="fixed bottom-20 left-3 right-3 z-50 glass-card-elevated p-3 grid grid-cols-3 gap-2"
             >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-primary/15 rounded-xl"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              {moreItems.map(mi => {
+                const active = activeTab === mi.id;
+                return (
+                  <button
+                    key={mi.id}
+                    onClick={() => handleTab(mi.id)}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl transition-colors ${
+                      active ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <mi.icon size={20} />
+                    <span className="text-[10px] font-medium">{mi.label}</span>
+                  </button>
+                );
+              })}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+        <div className="mx-3 mb-2 glass-card-elevated px-2 py-2 flex items-center justify-around">
+          {mainTabs.map((tab) => {
+            const isActive = tab.id === 'more' ? (showMore || isMoreActive) : activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTab(tab.id)}
+                className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors duration-300"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-primary/15 rounded-xl"
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <tab.icon
+                  size={20}
+                  className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
                 />
-              )}
-              <tab.icon
-                size={20}
-                className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
-              />
-              <span className={`relative z-10 text-[10px] font-medium transition-colors duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-                {tab.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+                <span className={`relative z-10 text-[10px] font-medium transition-colors duration-300 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 };
