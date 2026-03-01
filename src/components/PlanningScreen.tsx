@@ -1,86 +1,343 @@
-import { motion } from 'framer-motion';
+import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CalendarIcon, Clock, CheckCircle2, Circle, ChevronLeft, ChevronRight, Flame, BookOpen, FolderOpen, ListTodo } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
+import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.06 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
 };
 
-const hours = Array.from({ length: 14 }, (_, i) => i + 7); // 7h to 20h
+interface TimeBlock {
+  id: string;
+  label: string;
+  startHour: number;
+  durationMin: number;
+  type: 'task' | 'routine' | 'formation';
+  completed: boolean;
+  category?: string;
+}
 
-const blocks = [
-  { start: 7, end: 8, label: 'Routine matin', type: 'routine' },
-  { start: 8, end: 9.5, label: 'Refactoring API module', type: 'project' },
-  { start: 9.5, end: 10.5, label: 'Maquette écran profil', type: 'project' },
-  { start: 11, end: 11.75, label: 'Cours React — Module 4', type: 'formation' },
-  { start: 14, end: 15, label: 'Sport', type: 'routine' },
-  { start: 19, end: 19.5, label: 'Revue de journée', type: 'routine' },
-];
-
-const typeStyles: Record<string, string> = {
-  routine: 'bg-accent/15 border-accent/30 text-accent',
-  project: 'bg-primary/15 border-primary/30 text-primary',
-  formation: 'bg-success/15 border-success/30 text-success',
+const typeStyles: Record<string, { bg: string; border: string; text: string; glow: string }> = {
+  task: { bg: 'bg-primary/12', border: 'border-primary/25', text: 'text-primary', glow: 'shadow-primary/5' },
+  routine: { bg: 'bg-accent/12', border: 'border-accent/25', text: 'text-accent', glow: 'shadow-accent/5' },
+  formation: { bg: 'bg-success/12', border: 'border-success/25', text: 'text-success', glow: 'shadow-success/5' },
 };
+
+const hours = Array.from({ length: 17 }, (_, i) => i + 6); // 6h to 22h
 
 export const PlanningScreen = () => {
+  const { tasks, routines, formations } = useAppStore();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+  const selectedDayStr = format(selectedDate, 'yyyy-MM-dd');
+
+  // Build time blocks from real data
+  const timeBlocks = useMemo(() => {
+    const blocks: TimeBlock[] = [];
+
+    // Tasks for selected day
+    const dayTasks = tasks.filter(t => t.day === selectedDayStr);
+    let nextTaskHour = 8; // Start scheduling tasks at 8h
+    dayTasks.forEach(t => {
+      blocks.push({
+        id: `task-${t.id}`,
+        label: t.name,
+        startHour: nextTaskHour,
+        durationMin: t.duration,
+        type: 'task',
+        completed: t.completed,
+        category: t.category,
+      });
+      nextTaskHour += Math.ceil(t.duration / 60 * 2) / 2; // round to 30min slots
+    });
+
+    // Active routines - place at fixed times
+    const routineSlots: Record<string, number> = {
+      matin: 6.5,
+      corps: 14,
+      soir: 20,
+      esprit: 18,
+      spirituel: 6,
+    };
+    const activeRoutines = routines.filter(r => r.active);
+    activeRoutines.forEach(r => {
+      const startH = routineSlots[r.category] ?? 7;
+      blocks.push({
+        id: `routine-${r.id}`,
+        label: r.name,
+        startHour: startH,
+        durationMin: 30,
+        type: 'routine',
+        completed: r.completed,
+        category: r.category,
+      });
+    });
+
+    // Formation sessions for today
+    formations.forEach(f => {
+      f.modules.forEach(m => {
+        m.sessions.forEach(s => {
+          if (s.day === selectedDayStr) {
+            blocks.push({
+              id: `formation-${s.id}`,
+              label: `${f.name} — ${s.name}`,
+              startHour: 11,
+              durationMin: s.duration,
+              type: 'formation',
+              completed: s.completed,
+            });
+          }
+        });
+      });
+    });
+
+    return blocks.sort((a, b) => a.startHour - b.startHour);
+  }, [tasks, routines, formations, selectedDayStr]);
+
+  const goDay = (offset: number) => setSelectedDate(d => addDays(d, offset));
+
+  const dayStats = {
+    total: timeBlocks.length,
+    completed: timeBlocks.filter(b => b.completed).length,
+    totalMin: timeBlocks.reduce((a, b) => a + b.durationMin, 0),
+    tasks: timeBlocks.filter(b => b.type === 'task').length,
+    routines: timeBlocks.filter(b => b.type === 'routine').length,
+    formations: timeBlocks.filter(b => b.type === 'formation').length,
+  };
+
+  const formatBlockTime = (startHour: number, durationMin: number) => {
+    const startH = Math.floor(startHour);
+    const startM = Math.round((startHour - startH) * 60);
+    const endTotal = startHour * 60 + durationMin;
+    const endH = Math.floor(endTotal / 60);
+    const endM = endTotal % 60;
+    return `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')} — ${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
+  };
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
-      <motion.div variants={item}>
-        <h1 className="text-2xl font-bold tracking-tight">Planning</h1>
-        <p className="text-sm text-muted-foreground mt-1">Dimanche 1 Mars</p>
-      </motion.div>
-
-      {/* Day selector */}
-      <motion.div variants={item} className="flex gap-2 overflow-x-auto pb-1">
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
-          <button
-            key={i}
-            className={`w-10 h-12 rounded-xl flex flex-col items-center justify-center text-xs font-medium shrink-0 transition-colors ${
-              i === 6 ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted/50 text-muted-foreground'
-            }`}
+      {/* Header */}
+      <motion.div variants={item} className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Planning<span className="text-gradient">.</span></h1>
+          <p className="text-sm text-muted-foreground mt-1 capitalize">
+            {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => goDay(-1)}
+            className="w-9 h-9 rounded-xl glass-card-bright flex items-center justify-center text-muted-foreground"
           >
-            <span>{d}</span>
-            <span className="font-mono text-[10px]">{24 + i}</span>
-          </button>
-        ))}
+            <ChevronLeft size={16} />
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSelectedDate(new Date())}
+            className="px-3 py-2 rounded-xl text-xs font-semibold text-primary bg-primary/10"
+          >
+            Aujourd'hui
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => goDay(1)}
+            className="w-9 h-9 rounded-xl glass-card-bright flex items-center justify-center text-muted-foreground"
+          >
+            <ChevronRight size={16} />
+          </motion.button>
+        </div>
       </motion.div>
 
-      {/* Timeline */}
-      <motion.div variants={item} className="glass-card p-4 space-y-0">
-        {hours.map((hour) => {
-          const block = blocks.find(b => b.start === hour || (b.start < hour && b.end > hour && b.start === Math.floor(b.start) && Math.floor(b.start) === hour));
-          const activeBlock = blocks.find(b => b.start === hour);
+      {/* Week selector */}
+      <motion.div variants={item} className="flex gap-2">
+        {weekDays.map((day, i) => {
+          const isSelected = isSameDay(day, selectedDate);
+          const isToday = isSameDay(day, new Date());
+          const dayNum = format(day, 'd');
 
           return (
-            <div key={hour} className="flex gap-3 min-h-[48px]">
-              <div className="w-10 shrink-0 text-right">
-                <span className="text-[10px] font-mono text-muted-foreground">{hour}:00</span>
+            <motion.button
+              key={i}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => setSelectedDate(day)}
+              className={`flex-1 h-14 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all relative ${
+                isSelected
+                  ? 'glass-card-elevated border border-primary/30 shadow-lg shadow-primary/10'
+                  : isToday
+                  ? 'glass-card-bright border border-accent/20'
+                  : 'bg-muted/30'
+              }`}
+            >
+              <span className={`text-[10px] font-bold uppercase ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                {dayLabels[i]}
+              </span>
+              <span className={`text-sm font-mono font-black ${isSelected ? 'text-primary' : isToday ? 'text-accent' : 'text-foreground'}`}>
+                {dayNum}
+              </span>
+              {isSelected && (
+                <motion.div
+                  layoutId="day-indicator"
+                  className="absolute -bottom-0.5 w-5 h-1 rounded-full bg-primary"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
+            </motion.button>
+          );
+        })}
+      </motion.div>
+
+      {/* Day stats */}
+      <motion.div variants={item} className="grid grid-cols-3 gap-3">
+        <div className="stat-card stat-card-blue text-center">
+          <ListTodo size={16} className="mx-auto mb-1.5 text-primary" />
+          <p className="text-xl font-black text-foreground">{dayStats.tasks}</p>
+          <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Tâches</p>
+        </div>
+        <div className="stat-card stat-card-violet text-center">
+          <Flame size={16} className="mx-auto mb-1.5 text-accent" />
+          <p className="text-xl font-black text-foreground">{dayStats.routines}</p>
+          <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Routines</p>
+        </div>
+        <div className="stat-card stat-card-green text-center">
+          <BookOpen size={16} className="mx-auto mb-1.5 text-success" />
+          <p className="text-xl font-black text-foreground">{dayStats.formations}</p>
+          <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Formations</p>
+        </div>
+      </motion.div>
+
+      {/* Completion bar */}
+      {dayStats.total > 0 && (
+        <motion.div variants={item} className="glass-card-elevated p-4 relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-10 gradient-cool blur-3xl" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg gradient-cool flex items-center justify-center">
+                <CheckCircle2 size={12} className="text-white" />
               </div>
-              <div className="flex-1 border-l border-border/40 pl-3 pb-2">
-                {activeBlock ? (
-                  <motion.div
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className={`px-3 py-2 rounded-lg border text-xs font-medium ${typeStyles[activeBlock.type]}`}
-                  >
-                    {activeBlock.label}
-                    <span className="block text-[10px] opacity-60 mt-0.5 font-mono">
-                      {Math.floor(activeBlock.start)}:{(activeBlock.start % 1) * 60 || '00'} — {Math.floor(activeBlock.end)}:{(activeBlock.end % 1) * 60 || '00'}
-                    </span>
-                  </motion.div>
-                ) : (
-                  <div className="h-full" />
+              <span className="text-xs font-bold text-foreground/80">Avancement</span>
+            </div>
+            <span className="text-xs font-mono text-muted-foreground">
+              {dayStats.completed}/{dayStats.total} · {Math.round(dayStats.totalMin / 60 * 10) / 10}h prévues
+            </span>
+          </div>
+          <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full gradient-fresh rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${dayStats.total > 0 ? (dayStats.completed / dayStats.total) * 100 : 0}%` }}
+              transition={{ duration: 1, delay: 0.3 }}
+            />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Timeline */}
+      <motion.div variants={item} className="glass-card-elevated p-4 relative overflow-hidden">
+        <div className="absolute -top-20 -left-20 w-40 h-40 rounded-full opacity-5 gradient-primary blur-3xl" />
+
+        {hours.map((hour) => {
+          const hourBlocks = timeBlocks.filter(b => Math.floor(b.startHour) === hour);
+          const hasContent = hourBlocks.length > 0;
+
+          return (
+            <div key={hour} className="flex gap-3 min-h-[52px]">
+              {/* Time label */}
+              <div className="w-11 shrink-0 text-right pt-1">
+                <span className={`text-[11px] font-mono font-medium ${hasContent ? 'text-foreground/60' : 'text-muted-foreground/40'}`}>
+                  {hour.toString().padStart(2, '0')}:00
+                </span>
+              </div>
+
+              {/* Timeline line + content */}
+              <div className="flex-1 border-l border-border/20 pl-3 pb-1 relative">
+                {/* Dot on the timeline */}
+                {hasContent && (
+                  <div className="absolute -left-[3.5px] top-2 w-[7px] h-[7px] rounded-full bg-primary/60 ring-2 ring-background" />
                 )}
+
+                {hourBlocks.map((block) => {
+                  const style = typeStyles[block.type];
+                  const heightPx = Math.max(block.durationMin * 0.8, 44);
+
+                  return (
+                    <motion.div
+                      key={block.id}
+                      initial={{ opacity: 0, x: -12, scale: 0.95 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      transition={{ duration: 0.4, delay: 0.1 }}
+                      whileHover={{ scale: 1.02, x: 2 }}
+                      className={`${style.bg} border ${style.border} rounded-xl px-3.5 py-2.5 mb-2 shadow-lg ${style.glow} relative overflow-hidden`}
+                      style={{ minHeight: `${heightPx}px` }}
+                    >
+                      {/* Completed overlay */}
+                      {block.completed && (
+                        <div className="absolute inset-0 bg-background/30 backdrop-blur-[1px] flex items-center justify-center">
+                          <CheckCircle2 size={20} className="text-success/60" />
+                        </div>
+                      )}
+
+                      <div className="relative z-10">
+                        <p className={`text-sm font-semibold ${style.text} ${block.completed ? 'line-through opacity-60' : ''}`}>
+                          {block.label}
+                        </p>
+                        <span className={`text-[10px] font-mono ${style.text} opacity-60 mt-0.5 block`}>
+                          {formatBlockTime(block.startHour, block.durationMin)}
+                        </span>
+                      </div>
+
+                      {/* Type indicator */}
+                      <div className={`absolute top-0 left-0 w-1 h-full rounded-l-xl ${
+                        block.type === 'task' ? 'bg-primary' :
+                        block.type === 'routine' ? 'bg-accent' :
+                        'bg-success'
+                      }`} />
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           );
         })}
+      </motion.div>
+
+      {/* Empty state */}
+      {timeBlocks.length === 0 && (
+        <motion.div variants={item} className="glass-card-bright p-10 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5 gradient-primary" />
+          <CalendarIcon size={40} className="mx-auto mb-3 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Aucune activité prévue ce jour</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">Ajoute des tâches ou active des routines</p>
+        </motion.div>
+      )}
+
+      {/* Legend */}
+      <motion.div variants={item} className="flex items-center justify-center gap-4 py-2">
+        {[
+          { label: 'Tâches', color: 'bg-primary' },
+          { label: 'Routines', color: 'bg-accent' },
+          { label: 'Formations', color: 'bg-success' },
+        ].map(l => (
+          <div key={l.label} className="flex items-center gap-1.5">
+            <div className={`w-2.5 h-2.5 rounded-full ${l.color}`} />
+            <span className="text-[10px] text-muted-foreground font-medium">{l.label}</span>
+          </div>
+        ))}
       </motion.div>
     </motion.div>
   );
