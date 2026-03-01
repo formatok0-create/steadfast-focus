@@ -5,6 +5,7 @@ import { useAppStore } from '@/stores/appStore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
 import type { Skill } from '@/types/app';
 
 const container = {
@@ -34,6 +35,7 @@ export const SkillsScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [objective, setObjective] = useState('');
@@ -153,7 +155,7 @@ export const SkillsScreen = () => {
                 <motion.button whileTap={{ scale: 0.8 }} onClick={() => openEdit(skill)} className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
                   <Edit2 size={12} className="text-primary" />
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.8 }} onClick={() => deleteSkill(skill.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                <motion.button whileTap={{ scale: 0.8 }} onClick={() => setConfirmDeleteId(skill.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
                   <Trash2 size={12} className="text-destructive" />
                 </motion.button>
                 <motion.button whileTap={{ scale: 0.8 }} onClick={() => toggleSkillActive(skill.id)} className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
@@ -269,7 +271,7 @@ export const SkillsScreen = () => {
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => deleteSkill(skill.id)}
+                      onClick={() => setConfirmDeleteId(skill.id)}
                       className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/20 transition-colors"
                     >
                       <Trash2 size={12} /> Supprimer
@@ -368,6 +370,14 @@ export const SkillsScreen = () => {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmDeleteModal
+        open={!!confirmDeleteId}
+        title="Supprimer cette compétence ?"
+        message="Les heures enregistrées seront perdues."
+        onConfirm={() => { if (confirmDeleteId) deleteSkill(confirmDeleteId); setConfirmDeleteId(null); }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </motion.div>
   );
 };

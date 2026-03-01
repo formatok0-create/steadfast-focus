@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Circle, Flame, Sun, Moon, Dumbbell, Brain, Sparkles, Plus, Trash2, Bell, BellOff, Eye, EyeOff, X, Edit3, BarChart3, TrendingUp, Zap } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import type { Routine } from '@/types/app';
+import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
 
 const container = {
   hidden: { opacity: 0 },
@@ -181,6 +182,7 @@ const RoutineCard = ({
   routine: Routine; expanded: boolean; onToggleExpand: () => void; onEdit: () => void;
 }) => {
   const { toggleRoutine, deleteRoutine, toggleRoutineActive, toggleRoutineReminder } = useAppStore();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const cfg = categoryConfig[routine.category];
 
   return (
@@ -289,12 +291,20 @@ const RoutineCard = ({
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => deleteRoutine(routine.id)}
+                onClick={() => setConfirmDelete(true)}
                 className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive text-[10px] font-semibold hover:bg-destructive/20 transition-colors"
               >
                 <Trash2 size={12} />
               </motion.button>
             </div>
+
+            <ConfirmDeleteModal
+              open={confirmDelete}
+              title="Supprimer cette routine ?"
+              message="Le streak sera perdu définitivement."
+              onConfirm={() => { deleteRoutine(routine.id); setConfirmDelete(false); }}
+              onCancel={() => setConfirmDelete(false)}
+            />
           </motion.div>
         )}
       </AnimatePresence>
