@@ -48,25 +48,33 @@ export const PlanningScreen = () => {
 
     // Tasks for selected day
     const dayTasks = tasks.filter(t => t.day === selectedDayStr);
-    let nextTaskHour = 8; // fallback if no startTime
+    let nextTaskHour = 8;
     dayTasks.forEach(t => {
       let startHour: number;
+      let endHour: number;
       if (t.startTime) {
         const [h, m] = t.startTime.split(':').map(Number);
         startHour = h + m / 60;
       } else {
         startHour = nextTaskHour;
       }
+      if (t.endTime) {
+        const [h, m] = t.endTime.split(':').map(Number);
+        endHour = h + m / 60;
+      } else {
+        endHour = startHour + t.duration / 60;
+      }
+      const durationMin = Math.round((endHour - startHour) * 60);
       blocks.push({
         id: `task-${t.id}`,
         label: t.name,
         startHour,
-        durationMin: t.duration,
+        durationMin: durationMin > 0 ? durationMin : t.duration,
         type: 'task',
         completed: t.completed,
         category: t.category,
       });
-      nextTaskHour = startHour + Math.ceil(t.duration / 60 * 2) / 2;
+      nextTaskHour = endHour;
     });
 
     // Active routines - place at fixed times
