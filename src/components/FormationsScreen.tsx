@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, CheckCircle2, Circle, Clock, ChevronDown, ChevronRight, Plus, Trash2, Edit2, Play, Pause, RotateCcw, GraduationCap, Target, AlertTriangle } from 'lucide-react';
+import { BookOpen, CheckCircle2, Circle, Clock, ChevronDown, ChevronRight, Plus, Trash2, Edit2, Play, Pause, RotateCcw, GraduationCap, Target, AlertTriangle, TrendingUp, Zap } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Formation, FormationModule, FormationSession } from '@/types/app';
@@ -7,15 +7,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
 
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.08 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
 };
 
 export const FormationsScreen = () => {
@@ -32,27 +31,35 @@ export const FormationsScreen = () => {
     <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
       <motion.div variants={item} className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Formations</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Formations<span className="text-gradient">.</span></h1>
           <p className="text-sm text-muted-foreground mt-1">{formations.length} formation{formations.length > 1 ? 's' : ''}</p>
         </div>
-        <Button size="sm" onClick={() => { setEditingFormation(null); setShowForm(true); }} className="gap-1.5">
-          <Plus size={14} /> Nouvelle
-        </Button>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => { setEditingFormation(null); setShowForm(true); }}
+          className="w-11 h-11 rounded-2xl gradient-primary flex items-center justify-center text-white shadow-lg glow-primary"
+        >
+          <Plus size={20} />
+        </motion.button>
       </motion.div>
 
       {/* Global stats */}
       <motion.div variants={item} className="grid grid-cols-3 gap-3">
-        <div className="glass-card p-3 text-center">
-          <p className="text-lg font-bold text-primary">{completedCount}/{totalSessions.length}</p>
-          <p className="text-[10px] text-muted-foreground">Séances</p>
+        <div className="stat-card stat-card-blue text-center">
+          <CheckCircle2 size={18} className="mx-auto mb-2 text-primary" />
+          <p className="text-2xl font-black text-foreground">{completedCount}<span className="text-muted-foreground text-sm font-normal">/{totalSessions.length}</span></p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Séances</p>
         </div>
-        <div className="glass-card p-3 text-center">
-          <p className="text-lg font-bold text-accent">{totalHoursReal}h</p>
-          <p className="text-[10px] text-muted-foreground">Réelles</p>
+        <div className="stat-card stat-card-violet text-center">
+          <Clock size={18} className="mx-auto mb-2 text-accent" />
+          <p className="text-2xl font-black text-foreground">{totalHoursReal}h</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Réelles</p>
         </div>
-        <div className="glass-card p-3 text-center">
-          <p className="text-lg font-bold text-foreground">{totalHoursPlanned}h</p>
-          <p className="text-[10px] text-muted-foreground">Prévues</p>
+        <div className="stat-card stat-card-amber text-center">
+          <TrendingUp size={18} className="mx-auto mb-2 text-warning" />
+          <p className="text-2xl font-black text-foreground">{totalHoursPlanned}h</p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-1">Prévues</p>
         </div>
       </motion.div>
 
@@ -68,17 +75,14 @@ export const FormationsScreen = () => {
       ))}
 
       {formations.length === 0 && (
-        <motion.div variants={item} className="text-center py-12 text-muted-foreground">
-          <GraduationCap size={48} className="mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Aucune formation. Crée ta première !</p>
+        <motion.div variants={item} className="glass-card-bright p-10 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5 gradient-primary" />
+          <GraduationCap size={48} className="mx-auto mb-3 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Aucune formation. Crée ta première !</p>
         </motion.div>
       )}
 
-      <FormationFormModal
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        formation={editingFormation}
-      />
+      <FormationFormModal open={showForm} onClose={() => setShowForm(false)} formation={editingFormation} />
     </motion.div>
   );
 };
@@ -98,16 +102,14 @@ const FormationCard = ({
 
   const allSessions = formation.modules.flatMap(m => m.sessions);
   const completedSessions = allSessions.filter(s => s.completed).length;
-  const totalSessions = allSessions.length;
-  const progress = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
+  const totalSessionCount = allSessions.length;
+  const progress = totalSessionCount > 0 ? (completedSessions / totalSessionCount) * 100 : 0;
   const totalRealMin = allSessions.reduce((a, s) => a + s.realDuration, 0);
   const totalPlannedMin = allSessions.reduce((a, s) => a + s.duration, 0);
 
   const diff = totalRealMin - totalPlannedMin;
   const diffLabel = diff > 0 ? `+${diff}m retard` : diff < 0 ? `${Math.abs(diff)}m avance` : 'dans les temps';
   const diffColor = diff > 0 ? 'text-destructive' : diff < 0 ? 'text-success' : 'text-muted-foreground';
-
-  const statusLabels: Record<string, string> = { en_cours: '▶ En cours', en_pause: '⏸ Pause', terminée: '✅ Terminée' };
 
   const handleAddModule = () => {
     if (!newModuleName.trim()) return;
@@ -124,16 +126,24 @@ const FormationCard = ({
   };
 
   return (
-    <div className="glass-card-elevated p-5 space-y-4">
-      <div className="flex items-start justify-between">
+    <motion.div
+      whileHover={{ scale: 1.01, y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className="glass-card-elevated p-5 space-y-4 relative overflow-hidden"
+    >
+      <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-5 gradient-primary blur-2xl" />
+
+      <div className="flex items-start justify-between relative z-10">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <BookOpen size={16} className="text-primary shrink-0" />
-            <h3 className="font-semibold text-foreground truncate">{formation.name}</h3>
+            <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
+              <BookOpen size={14} className="text-white" />
+            </div>
+            <h3 className="font-bold text-foreground truncate">{formation.name}</h3>
           </div>
           <p className="text-xs text-muted-foreground mt-1">{formation.objective}</p>
           {skillName && (
-            <span className="inline-block mt-1.5 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            <span className="inline-block mt-1.5 text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
               🎯 {skillName}
             </span>
           )}
@@ -143,7 +153,7 @@ const FormationCard = ({
             value={formation.status}
             onValueChange={(v) => updateFormation(formation.id, { status: v as Formation['status'] })}
           >
-            <SelectTrigger className="h-7 text-[10px] w-auto min-w-[100px] border-none bg-muted/50">
+            <SelectTrigger className="h-7 text-[10px] w-auto min-w-[100px] border-none bg-muted/50 font-semibold">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -152,24 +162,24 @@ const FormationCard = ({
               <SelectItem value="terminée">✅ Terminée</SelectItem>
             </SelectContent>
           </Select>
-          <button onClick={onEdit} className="text-muted-foreground hover:text-primary transition-colors">
+          <motion.button whileTap={{ scale: 0.8 }} onClick={onEdit} className="text-muted-foreground hover:text-primary transition-colors">
             <Edit2 size={14} />
-          </button>
-          <button onClick={onDelete} className="text-muted-foreground hover:text-destructive transition-colors">
+          </motion.button>
+          <motion.button whileTap={{ scale: 0.8 }} onClick={onDelete} className="text-muted-foreground hover:text-destructive transition-colors">
             <Trash2 size={14} />
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Progress */}
       <div>
         <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-          <span>{completedSessions}/{totalSessions} séances</span>
-          <span className="font-mono">{Math.round(progress)}%</span>
+          <span className="font-medium">{completedSessions}/{totalSessionCount} séances</span>
+          <span className="font-mono font-bold">{Math.round(progress)}%</span>
         </div>
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+            className="h-full gradient-primary rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 1, delay: 0.3 }}
@@ -180,22 +190,23 @@ const FormationCard = ({
       {/* Time stats */}
       <div className="flex gap-4 text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1">
-          <Clock size={12} />
-          <span className="font-mono">{Math.floor(totalRealMin / 60)}h{(totalRealMin % 60).toString().padStart(2, '0')}</span>
+          <Clock size={12} className="text-primary" />
+          <span className="font-mono font-bold">{Math.floor(totalRealMin / 60)}h{(totalRealMin % 60).toString().padStart(2, '0')}</span>
           <span>réel</span>
         </div>
         <span className="font-mono">{Math.floor(totalPlannedMin / 60)}h{(totalPlannedMin % 60).toString().padStart(2, '0')} prévu</span>
-        <span className={`font-mono font-semibold ${diffColor}`}>{diffLabel}</span>
+        <span className={`font-mono font-bold ${diffColor}`}>{diffLabel}</span>
       </div>
 
       {/* Expand modules */}
-      <button
+      <motion.button
+        whileTap={{ scale: 0.97 }}
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 text-xs text-primary font-medium"
+        className="flex items-center gap-1 text-xs text-primary font-semibold"
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         {expanded ? 'Masquer les modules' : `Voir les modules (${formation.modules.length})`}
-      </button>
+      </motion.button>
 
       <AnimatePresence>
         {expanded && (
@@ -203,31 +214,36 @@ const FormationCard = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="space-y-4 pt-2 border-t border-border/50"
+            className="space-y-4 pt-3 border-t border-border/50"
           >
             {formation.modules.map(mod => (
               <div key={mod.id} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">{mod.name}</p>
+                  <p className="text-xs font-bold text-foreground/70 uppercase tracking-wider">{mod.name}</p>
                   <div className="flex items-center gap-2">
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => setAddingSessionTo(addingSessionTo === mod.id ? null : mod.id)}
-                      className="text-[10px] text-primary hover:underline"
+                      className="text-[10px] text-primary font-semibold hover:underline"
                     >
                       + Séance
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.8 }}
                       onClick={() => deleteFormationModule(formation.id, mod.id)}
-                      className="text-muted-foreground hover:text-destructive"
+                      className="text-muted-foreground hover:text-destructive transition-colors"
                     >
                       <Trash2 size={12} />
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
 
-                {/* Add session form */}
                 {addingSessionTo === mod.id && (
-                  <div className="flex gap-2 items-end pl-2">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="flex gap-2 items-end pl-2"
+                  >
                     <Input
                       placeholder="Nom de la séance"
                       value={newSession.name}
@@ -241,8 +257,14 @@ const FormationCard = ({
                       onChange={e => setNewSession(p => ({ ...p, duration: parseInt(e.target.value) || 0 }))}
                       className="h-8 text-xs w-16"
                     />
-                    <Button size="sm" className="h-8 text-xs" onClick={() => handleAddSession(mod.id)}>OK</Button>
-                  </div>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleAddSession(mod.id)}
+                      className="h-8 px-3 rounded-lg gradient-primary text-white text-xs font-bold"
+                    >
+                      OK
+                    </motion.button>
+                  </motion.div>
                 )}
 
                 {mod.sessions.map(session => (
@@ -256,7 +278,6 @@ const FormationCard = ({
               </div>
             ))}
 
-            {/* Add module */}
             {addingModule ? (
               <div className="flex gap-2">
                 <Input
@@ -267,21 +288,26 @@ const FormationCard = ({
                   autoFocus
                   onKeyDown={e => e.key === 'Enter' && handleAddModule()}
                 />
-                <Button size="sm" className="h-8 text-xs" onClick={handleAddModule}>Ajouter</Button>
-                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setAddingModule(false)}>✕</Button>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={handleAddModule} className="h-8 px-3 rounded-lg gradient-primary text-white text-xs font-bold">
+                  Ajouter
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={() => setAddingModule(false)} className="h-8 px-2 rounded-lg bg-muted text-foreground text-xs">
+                  ✕
+                </motion.button>
               </div>
             ) : (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setAddingModule(true)}
-                className="text-xs text-primary/70 hover:text-primary flex items-center gap-1"
+                className="text-xs text-primary/70 hover:text-primary flex items-center gap-1 font-semibold"
               >
                 <Plus size={12} /> Ajouter un module
-              </button>
+              </motion.button>
             )}
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 
@@ -323,47 +349,51 @@ const SessionRow = ({
   };
 
   return (
-    <div className="flex items-center gap-2 pl-2 group">
-      <button onClick={() => toggleFormationSession(formationId, moduleId, session.id)}>
+    <motion.div
+      whileHover={{ x: 2 }}
+      className="flex items-center gap-2 pl-2 group"
+    >
+      <motion.button whileTap={{ scale: 0.8 }} onClick={() => toggleFormationSession(formationId, moduleId, session.id)}>
         {session.completed ? (
-          <CheckCircle2 size={14} className="text-success shrink-0" />
+          <div className="w-5 h-5 rounded-full gradient-fresh flex items-center justify-center">
+            <CheckCircle2 size={10} className="text-white" />
+          </div>
         ) : (
-          <Circle size={14} className="text-muted-foreground shrink-0 hover:text-primary transition-colors" />
+          <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30 hover:border-primary/60 transition-colors" />
         )}
-      </button>
+      </motion.button>
       <span className={`text-xs flex-1 ${session.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
         {session.name}
       </span>
-      {/* Real vs planned */}
       <span className="text-[10px] font-mono text-muted-foreground">
-        {session.realDuration > 0 && <span className="text-primary">{session.realDuration}m</span>}
+        {session.realDuration > 0 && <span className="text-primary font-bold">{session.realDuration}m</span>}
         {session.realDuration > 0 && ' / '}
         {session.duration}m
       </span>
-      {/* Chrono */}
       {!session.completed && (
         <div className="flex items-center gap-1">
           {running ? (
             <>
-              <span className="text-[10px] font-mono text-primary animate-pulse">{formatTime(elapsed)}</span>
-              <button onClick={stopTimer} className="text-destructive hover:text-destructive/80">
+              <span className="text-[10px] font-mono text-primary animate-pulse font-bold">{formatTime(elapsed)}</span>
+              <motion.button whileTap={{ scale: 0.8 }} onClick={stopTimer} className="text-destructive hover:text-destructive/80">
                 <Pause size={12} />
-              </button>
+              </motion.button>
             </>
           ) : (
-            <button onClick={startTimer} className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+            <motion.button whileTap={{ scale: 0.8 }} onClick={startTimer} className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
               <Play size={12} />
-            </button>
+            </motion.button>
           )}
         </div>
       )}
-      <button
+      <motion.button
+        whileTap={{ scale: 0.8 }}
         onClick={() => deleteFormationSession(formationId, moduleId, session.id)}
         className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <Trash2 size={10} />
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 };
 
@@ -420,41 +450,63 @@ const FormationFormModal = ({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Nom</label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: React Avancé" />
+            <label className="text-xs font-bold text-muted-foreground mb-1 block uppercase tracking-wider">Nom</label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Formation React avancé" />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Objectif final</label>
-            <Input value={objective} onChange={e => setObjective(e.target.value)} placeholder="Ex: Maîtriser les patterns" />
+            <label className="text-xs font-bold text-muted-foreground mb-1 block uppercase tracking-wider">Objectif final</label>
+            <Input value={objective} onChange={e => setObjective(e.target.value)} placeholder="Ex: Maîtriser les hooks avancés" />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Compétence liée</label>
+            <label className="text-xs font-bold text-muted-foreground mb-1 block uppercase tracking-wider">Compétence liée</label>
             <Select value={skillId} onValueChange={setSkillId}>
-              <SelectTrigger><SelectValue placeholder="Choisir une compétence" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
               <SelectContent>
-                {skills.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
+                <SelectItem value="none">Aucune</SelectItem>
+                {skills.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Durée totale (heures)</label>
-              <Input type="number" value={totalDuration} onChange={e => setTotalDuration(parseInt(e.target.value) || 0)} />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Planning</label>
-              <Select value={planningMode} onValueChange={(v) => setPlanningMode(v as 'auto' | 'manuel')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manuel">Manuel</SelectItem>
-                  <SelectItem value="auto">Automatique</SelectItem>
-                </SelectContent>
-              </Select>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground mb-1 block uppercase tracking-wider">Durée totale (heures)</label>
+            <Input type="number" min={1} value={totalDuration} onChange={e => setTotalDuration(Number(e.target.value))} />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground mb-1 block uppercase tracking-wider">Mode de planning</label>
+            <div className="flex gap-2">
+              {(['manuel', 'auto'] as const).map(m => (
+                <motion.button
+                  key={m}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setPlanningMode(m)}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    planningMode === m ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted/50 text-muted-foreground'
+                  }`}
+                >
+                  {m === 'manuel' ? '✏️ Manuel' : '🤖 Auto'}
+                </motion.button>
+              ))}
             </div>
           </div>
-          <Button onClick={handleSubmit} className="w-full">{formation ? 'Mettre à jour' : 'Créer la formation'}</Button>
+          <div className="flex gap-2 pt-2">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-semibold"
+            >
+              Annuler
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={handleSubmit}
+              disabled={!name.trim() || !objective.trim()}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold ${
+                name.trim() && objective.trim() ? 'gradient-primary text-white shadow-lg glow-primary' : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+            >
+              {formation ? 'Enregistrer' : 'Créer'}
+            </motion.button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

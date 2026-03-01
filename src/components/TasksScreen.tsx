@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Play, Pause, Square, CheckCircle2, Circle, Clock, Trash2, AlertTriangle, Ban, ChevronDown, X, CalendarIcon } from 'lucide-react';
+import { Plus, Play, Pause, Square, CheckCircle2, Circle, Clock, Trash2, AlertTriangle, Ban, ChevronDown, X, CalendarIcon, ListTodo, TrendingUp, Zap } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
 import type { Task } from '@/types/app';
 import { format } from 'date-fns';
@@ -14,8 +14,8 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.06 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
 };
 
 const CATEGORIES = ['Développement', 'Design', 'Formation', 'Recherche', 'Admin', 'Personnel', 'Autre'];
@@ -37,35 +37,59 @@ export const TasksScreen = () => {
       <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
         <motion.div variants={item} className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Tâches</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Tâches<span className="text-gradient">.</span></h1>
             <p className="text-sm text-muted-foreground mt-1">
               {completed}/{dayTasks.length} terminées · {totalPlanned} min prévues
               {avoided > 0 && <span className="text-destructive"> · {avoided} évitée{avoided > 1 ? 's' : ''}</span>}
             </p>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setShowCreateModal(true)}
             disabled={atLimit}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              atLimit ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary/15 text-primary'
+            className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg ${
+              atLimit ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'gradient-primary text-white glow-primary'
             }`}
           >
             <Plus size={20} />
-          </button>
+          </motion.button>
+        </motion.div>
+
+        {/* Quick Stats */}
+        <motion.div variants={item} className="grid grid-cols-3 gap-3">
+          <div className="stat-card stat-card-blue text-center">
+            <ListTodo size={18} className="mx-auto mb-2 text-primary" />
+            <p className="text-2xl font-black text-foreground">{dayTasks.length}</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Tâches</p>
+          </div>
+          <div className="stat-card stat-card-green text-center">
+            <CheckCircle2 size={18} className="mx-auto mb-2 text-success" />
+            <p className="text-2xl font-black text-foreground">{completed}</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Terminées</p>
+          </div>
+          <div className="stat-card stat-card-violet text-center">
+            <Zap size={18} className="mx-auto mb-2 text-accent" />
+            <p className="text-2xl font-black text-foreground">{dayTasks.length > 0 ? Math.round((completed / dayTasks.length) * 100) : 0}%</p>
+            <p className="text-[10px] text-muted-foreground font-medium mt-1">Taux</p>
+          </div>
         </motion.div>
 
         {/* Daily limit indicator */}
         <motion.div variants={item} className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-muted-foreground font-medium">
             {dayTasks.length}/{settings.maxTasksPerDay} tâches (limite jour)
           </span>
           <div className="flex gap-1">
             {Array.from({ length: settings.maxTasksPerDay }).map((_, i) => (
-              <div
+              <motion.div
                 key={i}
-                className={`w-2 h-2 rounded-full ${
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className={`w-2.5 h-2.5 rounded-full ${
                   i < dayTasks.length
-                    ? i < completed ? 'bg-success' : 'bg-primary'
+                    ? i < completed ? 'bg-success glow-success' : 'bg-primary'
                     : 'bg-muted'
                 }`}
               />
@@ -74,29 +98,32 @@ export const TasksScreen = () => {
         </motion.div>
 
         {/* Time comparison */}
-        <motion.div variants={item} className="glass-card-elevated p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Clock size={14} className="text-primary" />
-            <span className="text-xs font-semibold text-foreground/80">Temps du jour</span>
+        <motion.div variants={item} className="glass-card-elevated p-5 relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-10 gradient-cool blur-3xl" />
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg gradient-cool flex items-center justify-center">
+              <Clock size={14} className="text-white" />
+            </div>
+            <span className="text-sm font-bold text-foreground/80">Temps du jour</span>
           </div>
           <div className="flex gap-6">
             <div className="flex-1">
-              <p className="text-2xl font-bold font-mono text-foreground">
-                {Math.floor(totalReal / 60)}h{(totalReal % 60).toString().padStart(2, '0')}
+              <p className="text-3xl font-black font-mono text-foreground">
+                {Math.floor(totalReal / 60)}<span className="text-primary">h</span>{(totalReal % 60).toString().padStart(2, '0')}
               </p>
               <p className="text-[10px] text-muted-foreground">Réel</p>
             </div>
             <div className="w-px bg-border" />
             <div className="flex-1">
-              <p className="text-2xl font-bold font-mono text-muted-foreground">
+              <p className="text-xl font-bold font-mono text-muted-foreground">
                 {Math.floor(totalPlanned / 60)}h{(totalPlanned % 60).toString().padStart(2, '0')}
               </p>
               <p className="text-[10px] text-muted-foreground">Prévu</p>
             </div>
           </div>
-          <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="mt-4 h-2 bg-muted/60 rounded-full overflow-hidden">
             <motion.div
-              className={`h-full rounded-full ${totalReal > totalPlanned ? 'bg-destructive' : 'bg-gradient-to-r from-primary to-accent'}`}
+              className={`h-full rounded-full ${totalReal > totalPlanned ? 'bg-destructive' : 'gradient-cool'}`}
               initial={{ width: 0 }}
               animate={{ width: `${totalPlanned > 0 ? Math.min((totalReal / totalPlanned) * 100, 100) : 0}%` }}
               transition={{ duration: 1, delay: 0.3 }}
@@ -105,17 +132,17 @@ export const TasksScreen = () => {
         </motion.div>
 
         {/* Timeline */}
-        <motion.div variants={item} className="glass-card p-4">
+        <motion.div variants={item} className="glass-card-bright p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Clock size={14} className="text-primary" />
-            <span className="text-xs font-semibold text-foreground/80">Timeline</span>
+            <TrendingUp size={14} className="text-primary" />
+            <span className="text-xs font-bold text-foreground/80">Timeline</span>
           </div>
           {dayTasks.length > 0 ? (
             <div className="flex gap-1 h-8">
               {dayTasks.map((task) => (
                 <motion.div
                   key={task.id}
-                  className={`rounded-md flex items-center justify-center text-[9px] font-mono ${
+                  className={`rounded-lg flex items-center justify-center text-[9px] font-mono font-bold ${
                     task.completed ? 'bg-success/20 text-success' :
                     task.status === 'évitée' ? 'bg-destructive/20 text-destructive' :
                     'bg-primary/15 text-primary'
@@ -142,7 +169,9 @@ export const TasksScreen = () => {
         ))}
 
         {dayTasks.length === 0 && (
-          <motion.div variants={item} className="glass-card p-8 text-center">
+          <motion.div variants={item} className="glass-card-bright p-10 text-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-5 gradient-primary" />
+            <ListTodo size={40} className="mx-auto mb-3 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Aucune tâche pour ce jour. Ajoute ta première tâche.</p>
           </motion.div>
         )}
@@ -210,12 +239,12 @@ const TaskCard = ({ task }: { task: Task }) => {
   const overTime = totalReal > task.duration;
 
   const statusIcon = task.status === 'terminée' || task.completed
-    ? <CheckCircle2 size={20} className="text-success" />
+    ? <div className="w-6 h-6 rounded-full gradient-fresh flex items-center justify-center"><CheckCircle2 size={14} className="text-white" /></div>
     : task.status === 'évitée'
-    ? <Ban size={20} className="text-destructive" />
+    ? <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center"><Ban size={14} className="text-destructive" /></div>
     : task.status === 'incomplète'
-    ? <AlertTriangle size={20} className="text-warning" />
-    : <Circle size={20} className="text-muted-foreground" />;
+    ? <div className="w-6 h-6 rounded-full bg-warning/20 flex items-center justify-center"><AlertTriangle size={14} className="text-warning" /></div>
+    : <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30" />;
 
   const statusLabel = task.status === 'terminée' || task.completed ? 'Terminée'
     : task.status === 'évitée' ? 'Évitée'
@@ -229,25 +258,29 @@ const TaskCard = ({ task }: { task: Task }) => {
 
   return (
     <>
-      <div className="glass-card-elevated p-4 space-y-3">
+      <motion.div
+        whileHover={{ scale: 1.01, y: -1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        className="glass-card-elevated p-4 space-y-3"
+      >
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowStatusMenu(!showStatusMenu)}>
+          <motion.button whileTap={{ scale: 0.8 }} onClick={() => setShowStatusMenu(!showStatusMenu)}>
             {statusIcon}
-          </button>
+          </motion.button>
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+            <p className={`text-sm font-semibold ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
               {task.name}
             </p>
             <div className="flex gap-2 mt-1 flex-wrap">
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{task.category}</span>
-              {task.strict && <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/15 text-warning font-semibold">STRICT</span>}
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${statusColor} bg-current/10`}>{statusLabel}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{task.category}</span>
+              {task.strict && <span className="text-[10px] px-2 py-0.5 rounded-full bg-warning/15 text-warning font-bold">STRICT</span>}
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor} bg-current/10`}>{statusLabel}</span>
             </div>
           </div>
           <div className="text-right shrink-0">
             <p className="text-xs font-mono text-muted-foreground">{task.duration}m</p>
-            <p className={`text-[10px] font-mono ${overTime ? 'text-destructive' : 'text-success'}`}>
+            <p className={`text-[10px] font-mono font-bold ${overTime ? 'text-destructive' : 'text-success'}`}>
               {totalReal}m réel
             </p>
           </div>
@@ -262,41 +295,43 @@ const TaskCard = ({ task }: { task: Task }) => {
               exit={{ opacity: 0, height: 0 }}
               className="flex gap-2 overflow-hidden"
             >
-              <button
-                onClick={() => { setTaskStatus(task.id, 'terminée'); setShowStatusMenu(false); }}
-                className="flex-1 py-2 rounded-lg bg-success/10 text-success text-[10px] font-semibold"
-              >
-                ✅ Terminée
-              </button>
-              <button
-                onClick={() => { setTaskStatus(task.id, 'incomplète'); setShowStatusMenu(false); }}
-                className="flex-1 py-2 rounded-lg bg-warning/10 text-warning text-[10px] font-semibold"
-              >
-                ⚠️ Incomplète
-              </button>
-              <button
+              {[
+                { status: 'terminée' as const, label: '✅ Terminée', cls: 'bg-success/10 text-success' },
+                { status: 'incomplète' as const, label: '⚠️ Incomplète', cls: 'bg-warning/10 text-warning' },
+              ].map(s => (
+                <motion.button
+                  key={s.status}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => { setTaskStatus(task.id, s.status); setShowStatusMenu(false); }}
+                  className={`flex-1 py-2.5 rounded-xl ${s.cls} text-[10px] font-bold`}
+                >
+                  {s.label}
+                </motion.button>
+              ))}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => { setShowAvoidModal(true); setShowStatusMenu(false); }}
-                className="flex-1 py-2 rounded-lg bg-destructive/10 text-destructive text-[10px] font-semibold"
+                className="flex-1 py-2.5 rounded-xl bg-destructive/10 text-destructive text-[10px] font-bold"
               >
                 🚫 Évitée
-              </button>
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Avoid reason display */}
         {task.status === 'évitée' && task.avoidReason && (
-          <div className="bg-destructive/5 border border-destructive/10 rounded-lg px-3 py-2">
+          <div className="bg-destructive/5 border border-destructive/10 rounded-xl px-3 py-2">
             <p className="text-[10px] text-destructive font-medium">Raison : {task.avoidReason}</p>
           </div>
         )}
 
         {/* Chrono */}
         {!task.completed && task.status !== 'évitée' && (
-          <div className="pt-2 border-t border-border/50 space-y-2">
+          <div className="pt-3 border-t border-border/50 space-y-2">
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <p className={`text-2xl font-mono font-bold ${overTime ? 'text-destructive' : 'text-foreground'}`}>
+                <p className={`text-2xl font-mono font-black ${overTime ? 'text-destructive' : running ? 'text-primary' : 'text-foreground'}`}>
                   {formatTime(elapsed)}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
@@ -305,23 +340,23 @@ const TaskCard = ({ task }: { task: Task }) => {
               </div>
               <div className="flex gap-2">
                 {!running ? (
-                  <button onClick={handleStart} className="p-3 rounded-xl bg-primary/15 text-primary">
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleStart} className="p-3 rounded-2xl gradient-cool text-white shadow-lg">
                     <Play size={18} />
-                  </button>
+                  </motion.button>
                 ) : (
-                  <button onClick={handlePause} className="p-3 rounded-xl bg-warning/15 text-warning">
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handlePause} className="p-3 rounded-2xl bg-warning/15 text-warning">
                     <Pause size={18} />
-                  </button>
+                  </motion.button>
                 )}
                 {(elapsed > 0 || running) && (
-                  <button onClick={handleStop} className="p-3 rounded-xl bg-destructive/10 text-destructive">
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleStop} className="p-3 rounded-2xl bg-destructive/10 text-destructive">
                     <Square size={18} />
-                  </button>
+                  </motion.button>
                 )}
               </div>
             </div>
             {overTime && (
-              <p className="text-[10px] text-destructive font-semibold">⚠ Dépassement du temps estimé</p>
+              <p className="text-[10px] text-destructive font-bold">⚠ Dépassement du temps estimé</p>
             )}
           </div>
         )}
@@ -329,28 +364,29 @@ const TaskCard = ({ task }: { task: Task }) => {
         {/* Session history */}
         {task.sessions.length > 0 && (
           <div className="pt-2 border-t border-border/50 space-y-1.5">
-            <span className="text-[10px] font-semibold text-foreground/60 uppercase tracking-wider">Sessions</span>
+            <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-wider">Sessions</span>
             {task.sessions.map((session, i) => (
               <div key={session.id} className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <div className="w-4 h-4 rounded bg-muted flex items-center justify-center font-mono text-foreground/60 text-[8px]">{i + 1}</div>
+                <div className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center font-mono text-primary text-[8px] font-bold">{i + 1}</div>
                 <span className="font-mono">{format(new Date(session.startTime), 'HH:mm', { locale: fr })}</span>
                 <span className="text-foreground/40">→</span>
                 <span className="font-mono">{session.endTime ? format(new Date(session.endTime), 'HH:mm', { locale: fr }) : '—'}</span>
-                <span className="ml-auto font-mono text-foreground">{session.duration}m</span>
+                <span className="ml-auto font-mono text-foreground font-semibold">{session.duration}m</span>
               </div>
             ))}
           </div>
         )}
 
         {/* Delete */}
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={() => deleteTask(task.id)}
-          className="flex items-center gap-1 text-[10px] text-destructive/60 font-medium pt-1"
+          className="flex items-center gap-1 text-[10px] text-destructive/60 font-medium pt-1 hover:text-destructive transition-colors"
         >
           <Trash2 size={10} />
           Supprimer
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Avoid reason modal */}
       <AnimatePresence>
@@ -371,9 +407,9 @@ const TaskCard = ({ task }: { task: Task }) => {
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground">Pourquoi cette tâche a été évitée ?</h3>
-                <button onClick={() => setShowAvoidModal(false)} className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowAvoidModal(false)} className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
                   <X size={14} className="text-foreground" />
-                </button>
+                </motion.button>
               </div>
               <textarea
                 value={avoidReason}
@@ -383,15 +419,16 @@ const TaskCard = ({ task }: { task: Task }) => {
                 rows={3}
                 className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
               />
-              <button
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={handleSetAvoided}
                 disabled={avoidReason.trim().length === 0}
-                className={`w-full py-3 rounded-xl text-sm font-semibold ${
+                className={`w-full py-3 rounded-xl text-sm font-bold ${
                   avoidReason.trim().length > 0 ? 'bg-destructive text-destructive-foreground' : 'bg-muted text-muted-foreground cursor-not-allowed'
                 }`}
               >
                 Confirmer
-              </button>
+              </motion.button>
             </motion.div>
           </>
         )}
@@ -414,13 +451,13 @@ const TaskFormModal = ({ open, onClose, defaultDay }: { open: boolean; onClose: 
   const dayTaskCount = tasks.filter(t => t.day === dayStr).length;
   const atLimit = dayTaskCount >= settings.maxTasksPerDay;
 
-  const canSubmit = name.trim().length > 0 && duration.length > 0 && parseInt(duration) > 0 && day && !atLimit;
+  const canSubmit = name.trim().length > 0 && parseInt(duration) > 0 && !atLimit;
 
   const handleSubmit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !day) return;
     addTask({
       name: name.trim(),
-      day: dayStr,
+      day: format(day, 'yyyy-MM-dd'),
       duration: parseInt(duration),
       category,
       strict,
@@ -451,110 +488,108 @@ const TaskFormModal = ({ open, onClose, defaultDay }: { open: boolean; onClose: 
           >
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-foreground">Nouvelle tâche</h2>
-              <button onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground">
+              <motion.button whileTap={{ scale: 0.9 }} onClick={onClose} className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground">
                 <X size={16} />
-              </button>
+              </motion.button>
             </div>
 
             {atLimit && (
-              <div className="bg-warning/10 border border-warning/20 rounded-xl px-3 py-2">
-                <p className="text-xs text-warning font-semibold">⚠ Limite atteinte ({settings.maxTasksPerDay} tâches/jour)</p>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+                <AlertTriangle size={14} className="text-destructive" />
+                <span className="text-xs text-destructive">Limite de {settings.maxTasksPerDay} tâches atteinte pour ce jour.</span>
               </div>
             )}
 
             {/* Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Nom *</label>
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Nom *</label>
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Ex: Rédiger documentation API"
+                placeholder="Nom de la tâche"
                 maxLength={100}
                 className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
-            {/* Day */}
+            {/* Day picker */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Jour *</label>
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Jour *</label>
               <Popover>
                 <PopoverTrigger asChild>
                   <button className={cn(
-                    "w-full bg-muted/50 border border-border rounded-xl px-3 py-3 text-xs font-mono text-left flex items-center gap-2",
+                    "w-full justify-start text-left font-normal bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm flex items-center gap-2",
                     !day && "text-muted-foreground"
                   )}>
-                    <CalendarIcon size={14} />
-                    {day ? format(day, 'dd/MM/yyyy') : 'Choisir'}
+                    <CalendarIcon size={14} className="text-primary" />
+                    {day ? format(day, "PPP", { locale: fr }) : "Choisir un jour"}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={day} onSelect={setDay} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  <Calendar mode="single" selected={day} onSelect={setDay} initialFocus className={cn("p-3")} />
                 </PopoverContent>
               </Popover>
             </div>
 
             {/* Duration */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Durée (minutes) *</label>
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Durée (min) *</label>
               <input
                 type="number"
                 value={duration}
                 onChange={e => setDuration(e.target.value)}
-                placeholder="Ex: 60"
+                placeholder="30"
                 min={1}
-                max={480}
-                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
-              {duration.length > 0 && parseInt(duration) <= 0 && (
-                <p className="text-[10px] text-destructive">Impossible de créer une tâche sans durée</p>
-              )}
             </div>
 
             {/* Category */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Catégorie</label>
+              <label className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Catégorie</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map(cat => (
-                  <button
+                  <motion.button
                     key={cat}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setCategory(cat)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      category === cat ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted/50 text-muted-foreground'
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
+                      category === cat
+                        ? 'bg-primary/15 text-primary border border-primary/30'
+                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {cat}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
 
             {/* Strict */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-foreground">Mode strict</p>
-                <p className="text-[10px] text-muted-foreground">Durée obligatoire non modifiable</p>
-              </div>
-              <button
-                onClick={() => setStrict(!strict)}
-                className={`w-12 h-7 rounded-full transition-colors relative ${strict ? 'bg-warning' : 'bg-muted'}`}
-              >
-                <motion.div
-                  className="w-5 h-5 rounded-full bg-foreground absolute top-1"
-                  animate={{ left: strict ? 26 : 4 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                />
-              </button>
-            </div>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setStrict(!strict)}
+              className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${
+                strict ? 'bg-warning/10 border border-warning/30' : 'bg-muted/50 border border-border'
+              }`}
+            >
+              <span className="text-sm text-foreground">Tâche stricte</span>
+              <span className={`text-xs font-bold ${strict ? 'text-warning' : 'text-muted-foreground'}`}>
+                {strict ? 'OUI' : 'NON'}
+              </span>
+            </motion.button>
 
-            <button
+            {/* Submit */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className={`w-full py-3.5 rounded-xl text-sm font-semibold transition-colors ${
-                canSubmit ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground cursor-not-allowed'
+              className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all ${
+                canSubmit ? 'gradient-primary text-white shadow-lg glow-primary' : 'bg-muted text-muted-foreground cursor-not-allowed'
               }`}
             >
               Créer la tâche
-            </button>
+            </motion.button>
           </motion.div>
         </>
       )}
