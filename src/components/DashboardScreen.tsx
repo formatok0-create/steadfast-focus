@@ -12,7 +12,7 @@ const item = {
 };
 
 export const DashboardScreen = () => {
-  const { tasks, routines, quote } = useAppStore();
+  const { tasks, routines, quote, setTaskStatus } = useAppStore();
 
   const todayTasks = tasks;
   const completedTasks = todayTasks.filter(t => t.completed).length;
@@ -30,7 +30,7 @@ export const DashboardScreen = () => {
           <h1 className="text-2xl font-bold tracking-tight">Bonjour.</h1>
         </div>
         <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${isHonorable ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'}`}>
-          {isHonorable ? 'Journée honorable' : 'En cours…'}
+          {isHonorable ? '✅ Journée honorable' : '⚠️ En cours…'}
         </div>
       </motion.div>
 
@@ -63,7 +63,7 @@ export const DashboardScreen = () => {
           <motion.div
             className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
             initial={{ width: 0 }}
-            animate={{ width: `${Math.min((totalReal / totalEstimated) * 100, 100)}%` }}
+            animate={{ width: `${totalEstimated > 0 ? Math.min((totalReal / totalEstimated) * 100, 100) : 0}%` }}
             transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
           />
         </div>
@@ -77,7 +77,30 @@ export const DashboardScreen = () => {
         </div>
         <div className="space-y-2">
           {todayTasks.map((task) => (
-            <TaskRow key={task.id} task={task} />
+            <motion.button
+              key={task.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setTaskStatus(task.id, task.completed ? undefined as any : 'terminée')}
+              className="glass-card p-3.5 w-full flex items-center gap-3 text-left"
+            >
+              {task.completed ? (
+                <CheckCircle2 size={18} className="text-success shrink-0" />
+              ) : task.status === 'évitée' ? (
+                <Circle size={18} className="text-destructive shrink-0" />
+              ) : (
+                <Circle size={18} className="text-muted-foreground shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium truncate ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  {task.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">{task.category}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs font-mono text-muted-foreground">{task.duration} min</p>
+                {task.strict && <span className="text-[9px] text-warning font-semibold">STRICT</span>}
+              </div>
+            </motion.button>
           ))}
         </div>
       </motion.div>
@@ -95,33 +118,6 @@ export const DashboardScreen = () => {
         </div>
       </motion.div>
     </motion.div>
-  );
-};
-
-const TaskRow = ({ task }: { task: any }) => {
-  const { toggleTask } = useAppStore();
-  return (
-    <motion.button
-      whileTap={{ scale: 0.98 }}
-      onClick={() => toggleTask(task.id)}
-      className="glass-card p-3.5 w-full flex items-center gap-3 text-left"
-    >
-      {task.completed ? (
-        <CheckCircle2 size={18} className="text-success shrink-0" />
-      ) : (
-        <Circle size={18} className="text-muted-foreground shrink-0" />
-      )}
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-          {task.name}
-        </p>
-        <p className="text-xs text-muted-foreground mt-0.5">{task.category}</p>
-      </div>
-      <div className="text-right shrink-0">
-        <p className="text-xs font-mono text-muted-foreground">{task.duration} min</p>
-        {task.strict && <span className="text-[9px] text-warning font-semibold">STRICT</span>}
-      </div>
-    </motion.button>
   );
 };
 
