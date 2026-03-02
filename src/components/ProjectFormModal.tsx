@@ -8,6 +8,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ImagePicker } from '@/components/ImagePicker';
 
 interface ProjectFormModalProps {
   open: boolean;
@@ -28,6 +29,7 @@ export const ProjectFormModal = ({ open, onClose, project }: ProjectFormModalPro
   const [dailyEndTime, setDailyEndTime] = useState(project?.dailyEndTime ?? '');
   const [estimatedTime, setEstimatedTime] = useState(project?.estimatedTime?.toString() ?? '');
   const [status, setStatus] = useState<Project['status']>(project?.status ?? 'en_cours');
+  const [imageUrl, setImageUrl] = useState<string | undefined>(project?.imageUrl);
 
   const canSubmit = name.trim().length > 0 && objective.trim().length > 0 && estimatedTime.length > 0 && startDate && endDate;
 
@@ -43,6 +45,7 @@ export const ProjectFormModal = ({ open, onClose, project }: ProjectFormModalPro
       dailyEndTime: dailyEndTime || undefined,
       estimatedTime: parseInt(estimatedTime),
       status,
+      imageUrl,
     };
     if (isEdit) {
       updateProject(project.id, data);
@@ -77,6 +80,8 @@ export const ProjectFormModal = ({ open, onClose, project }: ProjectFormModalPro
                 <X size={16} />
               </button>
             </div>
+            {/* Image */}
+            <ImagePicker value={imageUrl} onChange={setImageUrl} label="Logo du projet" />
 
             {/* Name */}
             <div className="space-y-1.5">

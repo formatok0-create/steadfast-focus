@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ImagePicker } from '@/components/ImagePicker';
 
 const container = {
   hidden: { opacity: 0 },
@@ -136,9 +137,13 @@ const FormationCard = ({
       <div className="flex items-start justify-between relative z-10">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
-              <BookOpen size={14} className="text-white" />
-            </div>
+            {formation.imageUrl ? (
+              <img src={formation.imageUrl} alt="" className="w-7 h-7 rounded-lg object-cover" />
+            ) : (
+              <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
+                <BookOpen size={14} className="text-white" />
+              </div>
+            )}
             <h3 className="font-bold text-foreground truncate">{formation.name}</h3>
           </div>
           <p className="text-xs text-muted-foreground mt-1">{formation.objective}</p>
@@ -410,6 +415,7 @@ const FormationFormModal = ({
   const [totalDuration, setTotalDuration] = useState(10);
   const [planningMode, setPlanningMode] = useState<'auto' | 'manuel'>('manuel');
   const [status, setStatus] = useState<Formation['status']>('en_cours');
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (formation) {
@@ -419,8 +425,9 @@ const FormationFormModal = ({
       setTotalDuration(formation.totalDuration);
       setPlanningMode(formation.planningMode);
       setStatus(formation.status);
+      setImageUrl(formation.imageUrl);
     } else {
-      setName(''); setObjective(''); setSkillId(''); setTotalDuration(10); setPlanningMode('manuel'); setStatus('en_cours');
+      setName(''); setObjective(''); setSkillId(''); setTotalDuration(10); setPlanningMode('manuel'); setStatus('en_cours'); setImageUrl(undefined);
     }
   }, [formation, open]);
 
@@ -433,6 +440,7 @@ const FormationFormModal = ({
       totalDuration,
       planningMode,
       status,
+      imageUrl,
     };
     if (formation) {
       updateFormation(formation.id, data);
@@ -449,6 +457,7 @@ const FormationFormModal = ({
           <DialogTitle>{formation ? 'Modifier la formation' : 'Nouvelle formation'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <ImagePicker value={imageUrl} onChange={setImageUrl} label="Logo de la formation" />
           <div>
             <label className="text-xs font-bold text-muted-foreground mb-1 block uppercase tracking-wider">Nom</label>
             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Formation React avancé" />
