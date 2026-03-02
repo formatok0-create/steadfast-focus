@@ -366,7 +366,7 @@ const RoutineFormModal = ({ open, onClose, routine }: { open: boolean; onClose: 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-x-3 bottom-0 z-50 glass-card-elevated rounded-t-3xl overflow-y-auto p-5 space-y-5 max-h-[80vh]"
+            className="fixed inset-x-3 bottom-0 z-50 glass-card-elevated rounded-t-3xl overflow-y-auto p-5 pb-24 space-y-5 max-h-[85vh]"
           >
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-foreground">{isEdit ? 'Modifier la routine' : 'Nouvelle routine'}</h2>

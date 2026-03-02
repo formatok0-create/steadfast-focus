@@ -68,7 +68,7 @@ export const ProjectFormModal = ({ open, onClose, project }: ProjectFormModalPro
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-x-3 bottom-0 top-16 z-50 glass-card-elevated rounded-t-3xl overflow-y-auto p-5 space-y-5"
+            className="fixed inset-x-3 bottom-0 top-16 z-50 glass-card-elevated rounded-t-3xl overflow-y-auto p-5 pb-24 space-y-5"
           >
             {/* Header */}
             <div className="flex items-center justify-between">

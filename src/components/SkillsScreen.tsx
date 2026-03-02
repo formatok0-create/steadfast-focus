@@ -304,7 +304,7 @@ export const SkillsScreen = () => {
             <motion.div
               initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed inset-x-3 bottom-0 z-50 glass-card-elevated rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto"
+              className="fixed inset-x-3 bottom-0 z-50 glass-card-elevated rounded-t-3xl p-5 pb-24 space-y-4 max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
