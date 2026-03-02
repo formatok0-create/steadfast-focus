@@ -439,7 +439,7 @@ export const DailyReviewScreen = () => {
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: 'spring', damping: 25 }}
               onClick={(e) => e.stopPropagation()}
-              className="glass-card-elevated w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl p-5 space-y-4"
+              className="glass-card-elevated w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl p-5 pb-24 space-y-4"
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-foreground">Revue de journée</h3>
