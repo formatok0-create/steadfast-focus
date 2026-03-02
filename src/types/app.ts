@@ -26,6 +26,7 @@ export interface Task {
 export interface Project {
   id: string;
   name: string;
+  imageUrl?: string;
   objective: string;
   priority: 'haute' | 'moyenne' | 'basse';
   startDate: string;
@@ -77,6 +78,7 @@ export interface FormationSession {
 export interface Formation {
   id: string;
   name: string;
+  imageUrl?: string;
   skillId?: string;
   objective: string;
   totalDuration: number; // hours

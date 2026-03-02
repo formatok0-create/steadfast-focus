@@ -102,6 +102,9 @@ export const ProjectsScreen = () => {
               >
                 <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full opacity-5 gradient-primary blur-2xl" />
                 <div className="flex items-start justify-between relative z-10">
+                  {project.imageUrl && (
+                    <img src={project.imageUrl} alt="" className="w-10 h-10 rounded-xl object-cover mr-3 shrink-0" />
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-foreground">{project.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1 truncate">{project.objective}</p>
@@ -203,6 +206,9 @@ const ProjectDetail = ({ project, onBack }: { project: Project; onBack: () => vo
           <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={onBack} className="w-10 h-10 rounded-2xl glass-card-bright flex items-center justify-center text-foreground">
             <ArrowLeft size={18} />
           </motion.button>
+          {project.imageUrl && (
+            <img src={project.imageUrl} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" />
+          )}
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-extrabold tracking-tight truncate">{project.name}</h1>
             <p className="text-xs text-muted-foreground">{project.objective}</p>
