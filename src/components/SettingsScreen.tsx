@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Settings, Moon, Sun, Minimize2, Bell, Shield, Download, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Settings, Moon, Sun, Minimize2, Bell, Shield, Download, Eye, EyeOff, Trash2, BellRing } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useState } from 'react';
 const container = {
   hidden: { opacity: 0 },
@@ -37,7 +38,16 @@ const sectionLabels: Record<string, string> = {
 
 export const SettingsScreen = () => {
   const { settings, updateSettings, resetAll } = useAppStore();
+  const { requestPermission } = useNotifications();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [notifStatus, setNotifStatus] = useState<string>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  );
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestPermission();
+    setNotifStatus(granted ? 'granted' : 'denied');
+  };
 
   const toggleSection = (section: string) => {
     const current = settings.enabledSections;
@@ -169,7 +179,40 @@ export const SettingsScreen = () => {
         </div>
       </motion.div>
 
-      {/* Sections visibility */}
+      {/* Notification activation */}
+      <motion.div variants={item} className="glass-card p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <BellRing size={14} className="text-primary" />
+          <span className="text-sm font-semibold text-foreground/80">Rappels quotidiens</span>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          3 rappels : Matin (6h30) · Mi-journée (12h) · Soir (21h)
+        </p>
+        {notifStatus === 'granted' ? (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-primary/10 border border-primary/25">
+            <Bell size={14} className="text-primary" />
+            <span className="text-xs font-medium text-primary">Notifications activées ✓</span>
+          </div>
+        ) : notifStatus === 'denied' ? (
+          <div className="px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/25">
+            <span className="text-xs text-destructive">Notifications bloquées. Active-les dans les paramètres de ton navigateur.</span>
+          </div>
+        ) : notifStatus === 'unsupported' ? (
+          <div className="px-4 py-3 rounded-xl bg-muted/50">
+            <span className="text-xs text-muted-foreground">Notifications non supportées sur cet appareil.</span>
+          </div>
+        ) : (
+          <button
+            onClick={handleEnableNotifications}
+            className="w-full py-3 rounded-xl gradient-primary text-white text-sm font-bold flex items-center justify-center gap-2"
+          >
+            <BellRing size={16} />
+            Activer les notifications
+          </button>
+        )}
+      </motion.div>
+
+
       <motion.div variants={item} className="glass-card p-5 space-y-3">
         <span className="text-sm font-semibold text-foreground/80">Sections visibles</span>
         <div className="space-y-2">
