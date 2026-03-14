@@ -155,7 +155,7 @@ const MOCK_OBJECTIVES: MonthlyObjective[] = [
 ];
 
 const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'sombre', maxTasksPerDay: 6, maxActiveSkills: 2, strictMode: false,
+  theme: 'focus', maxTasksPerDay: 6, maxActiveSkills: 2, strictMode: false,
   notificationTone: 'calme',
   enabledSections: ['dashboard', 'projects', 'tasks', 'routines', 'skills', 'formations', 'planning', 'objectives', 'stats', 'settings'],
 };
