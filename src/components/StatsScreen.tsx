@@ -37,7 +37,7 @@ export const StatsScreen = () => {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
       <motion.div variants={item}>
-        <h1 className="text-2xl font-bold tracking-tight">Statistiques</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Statistiques<span className="text-gradient">.</span></h1>
         <p className="text-sm text-muted-foreground mt-1">Vue d'ensemble de ta discipline</p>
       </motion.div>
 

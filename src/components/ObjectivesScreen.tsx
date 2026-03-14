@@ -113,16 +113,16 @@ export const ObjectivesScreen = () => {
       <motion.div variants={container} initial="hidden" animate="show" className="px-4 pt-2 pb-28 space-y-5">
         <motion.div variants={item} className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Objectifs du Mois</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Objectifs<span className="text-gradient">.</span></h1>
             <p className="text-sm text-muted-foreground mt-1">
               {current ? monthLabel(current.month) : 'Aucun objectif'}
             </p>
           </div>
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={openAdd}
-            className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center"
+            className="w-11 h-11 rounded-2xl gradient-primary flex items-center justify-center text-white shadow-lg glow-primary"
           >
             <Plus size={20} />
           </motion.button>
