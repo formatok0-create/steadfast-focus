@@ -369,7 +369,12 @@ export const BottomNav = () => {
       </AnimatePresence>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
-        <div className="mx-4 mb-3 glass-card-elevated px-3 py-2.5 flex items-center justify-around">
+        <div className="mx-4 mb-3 rounded-[1.25rem] px-2 py-2 flex items-center justify-around" style={{
+          background: 'linear-gradient(145deg, hsl(265 25% 12% / 0.92), hsl(260 30% 8% / 0.95))',
+          backdropFilter: 'blur(32px) saturate(1.8)',
+          border: '1px solid hsl(280 30% 20% / 0.35)',
+          boxShadow: '0 -4px 40px -10px hsl(330 85% 40% / 0.15), 0 20px 60px -15px hsl(260 30% 3% / 0.7), inset 0 1px 0 0 hsl(280 50% 80% / 0.06)',
+        }}>
           {mainTabs.map((tab) => {
             const isActive = tab.id === 'more' ? (showMore || isMoreActive)
               : tab.id === 'chrono' ? showChrono
@@ -383,7 +388,8 @@ export const BottomNav = () => {
                 {isActive && (
                   <motion.div
                     layoutId="activeNavTab"
-                    className="absolute inset-0 gradient-primary rounded-2xl opacity-15"
+                    className="absolute inset-0 rounded-2xl gradient-warm"
+                    style={{ opacity: 0.18 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 28 }}
                   />
                 )}
