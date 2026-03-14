@@ -100,7 +100,7 @@ export interface MonthlyObjective {
 }
 
 export interface AppSettings {
-  theme: 'sombre' | 'clair' | 'minimal';
+  theme: 'focus' | 'energy' | 'calm' | 'minimal';
   maxTasksPerDay: number;
   maxActiveSkills: number;
   strictMode: boolean;
