@@ -64,6 +64,8 @@ export default {
         violet: "hsl(var(--violet))",
         rose: "hsl(var(--rose))",
         amber: "hsl(var(--amber))",
+        magenta: "hsl(var(--magenta))",
+        coral: "hsl(var(--coral))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
