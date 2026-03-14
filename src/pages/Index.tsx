@@ -29,12 +29,12 @@ const screens: Record<string, React.FC> = {
 };
 
 const Index = () => {
-  const { activeTab } = useAppStore();
-  useNotifications(); // Schedule daily reminders
+  const { activeTab, settings } = useAppStore();
+  useNotifications();
   const Screen = screens[activeTab] || DashboardScreen;
 
   return (
-    <div className="min-h-screen bg-background max-w-md mx-auto relative flex flex-col">
+    <div data-theme={settings.theme} className="min-h-screen bg-background max-w-md mx-auto relative flex flex-col">
       <div className="safe-area-top pt-4" />
       <AnimatePresence mode="wait">
         <motion.div
